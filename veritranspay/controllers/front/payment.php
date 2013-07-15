@@ -43,8 +43,7 @@ class VeritransPayPaymentModuleFrontController extends ModuleFrontController
 
 		// $rand = $this->generateRandStr(10);
 		$veritrans->settlement_type = '01';
-		$request_id = $this->generateRandStr(10);
-		$veritrans->order_id = $request_id;
+		$veritrans->order_id = uniqid();
 		$veritrans->session_id = session_id();
 				
 		$veritrans->finish_payment_return_url = $link->getModuleLink('veritranspay', 'success');
@@ -73,7 +72,6 @@ class VeritransPayPaymentModuleFrontController extends ModuleFrontController
 		$veritrans->postal_code = $delivery_address->postcode;
 		$veritrans->phone = $delivery_address->phone_mobile;
 		$veritrans->email = $customer->email;
-		echo 'email'.$customer->email;
 		
 		$commodities = $this->addCommodities($cart, $shipping_cost);
 		$veritrans->commodity = $commodities;
@@ -117,8 +115,7 @@ class VeritransPayPaymentModuleFrontController extends ModuleFrontController
 			'this_path_ssl' => Tools::getShopDomainSsl(true, true).__PS_BASE_URI__.'modules/'.$this->module->name.'/'
 		));
 
-		$this->insertTransaction($customer_id, $request_id, $token_merchant);
-
+		$this->insertTransaction($cart->id_customer, $veritrans->order_id, $token_merchant);
 		$this->setTemplate('payment_execution.tpl');
 	}
 
@@ -145,27 +142,8 @@ class VeritransPayPaymentModuleFrontController extends ModuleFrontController
 		return $commodities;
 	}
 
-	// To generate random order id, ensuring unique order id sent every transaction 
-	function generateRandStr($length)
-	{
-		$randstr = ""; 
-		for($i=0; $i<$length; $i++)
-			{$randnum = mt_rand(0,61); 
-				if($randnum < 10){ 
-	            $randstr .= chr($randnum+48); 
-	        } else if ($randnum < 36){ 
-	            $randstr .= chr($randnum+55); 
-	        }else{ 
-	            $randstr .= chr($randnum+61); 
-	        }
-	    } 
-      return $randstr; 
-  	}
-
   	function insertTransaction($customer_id, $request_id, $token_merchant)
   	{
-  		//echo '<br/>'.$request_id.'<br/>'.$token_merchant.'<br/>';
-
   		$sql = 'INSERT INTO `'._DB_PREFIX_.'vt_transaction`
   				(`id_customer`, `request_id`, `token_merchant`)
   				VALUES ('.(int)$customer_id.',

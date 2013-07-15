@@ -42,11 +42,22 @@ class VeritransPayValidationModuleFrontController extends ModuleFrontController
 		$data = $this->getData($id_customer, $recentTransaction);
 
 		$current_request = $data['request_id'];
-		$token_merchant = $data['token_merchant'];		
+		$token_merchant = $data['token_merchant'];
+
+		// echo 'req 1 : '.$current_request;
+		// echo '<br>';
+		// echo '<br/>t1 : '.$token_merchant.'<br/>';
+		// echo '<br>';
+
+		// echo 'req 2 : '.$veritrans_notification->orderId;
+		// echo '<br>';
+		// echo 't2 : '.$veritrans_notification->TOKEN_MERCHANT.'<br/>';
+		// echo '<br>';	
+
+		// $status = $veritrans_notification->mStatus;
 
 		/** Validating order*/
-		if( ($token_merchant == $veritrans_notification->TOKEN_MERCHANT)
-			&& ($current_request == $veritrans_notification->orderId) )
+		if( $current_request.'' == $veritrans_notification->orderId.'' && $token_merchant.'' == $veritrans_notification->TOKEN_MERCHANT.'' )
 		{
 			/** case success ???????*/
 			if ($veritrans_notification->mStatus == "success")
@@ -54,14 +65,17 @@ class VeritransPayValidationModuleFrontController extends ModuleFrontController
 				$this->module->validateOrder($cart->id, Configuration::get('PS_OS_PAYMENT'), $total, $this->module->displayName, NULL, $mailVars, (int)$currency->id, false, $customer->secure_key);			
 				$status = "Payment Success";
 				$this->validate($this->module->currentOrder, $recentTransaction, $status);
+				// echo 'transaction success';
 			}
 			elseif ($veritrans_notification->mStatus == "failure")
 			{
 				$this->module->validateOrder($cart->id, Configuration::get('PS_OS_ERROR'), $total, $this->module->displayName, NULL, $mailVars, (int)$currency->id, false, $customer->secure_key);
 				$status = "Payment Error";
 				$this->validate($this->module->currentOrder, $recentTransaction, $status);
+				// echo 'transaction failure';
 			}		
 		}
+		exit;
 	}
 
 	function getRecentOrder($id_customer)

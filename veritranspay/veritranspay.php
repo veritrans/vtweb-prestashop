@@ -10,8 +10,6 @@ class VeritransPay extends PaymentModule
 
 	public $merchant_id;
 	public $merchant_hash;
-	public $token_merchant;
-	public $order_id;
 
 	public function __construct()
 	{
@@ -23,15 +21,11 @@ class VeritransPay extends PaymentModule
 		$this->currencies = true;
 		$this->currencies_mode = 'checkbox';
 
-		$config = Configuration::getMultiple(array('MERCHANT_ID', 'MERCHANT_HASH', 'TOKEN_MERCHANT', 'ORDER_ID'));
+		$config = Configuration::getMultiple(array('MERCHANT_ID', 'MERCHANT_HASH'));
 		if (isset($config['MERCHANT_ID']))
 			$this->merchant_id = $config['MERCHANT_ID'];
 		if (isset($config['MERCHANT_HASH']))
 			$this->merchant_hash = $config['MERCHANT_HASH'];
-		if (isset($config['TOKEN_MERCHANT']))
-			$this->token_merchant = $config['TOKEN_MERCHANT'];
-		if (isset($config['ORDER_ID']))
-			$this->order_id = $config['ORDER_ID'];
 
 		parent::__construct();
 
@@ -46,9 +40,7 @@ class VeritransPay extends PaymentModule
 
 		$this->extra_mail_vars = array(
 										'{merchant_id}' => Configuration::get('MERCHANT_ID'),
-										'{merchant_hash}' => nl2br(Configuration::get('MERCHANT_HASH')),
-										'{token_merchant}' => nl2br(Configuration::get('TOKEN_MERCHANT')),
-										'{order_id}' => nl2br(Configuration::get('ORDER_ID'))
+										'{merchant_hash}' => nl2br(Configuration::get('MERCHANT_HASH'))
 										);
 	}
 
@@ -68,8 +60,6 @@ class VeritransPay extends PaymentModule
 	{
 		if (!Configuration::deleteByName('MERCHANT_ID')
 				|| !Configuration::deleteByName('MERCHANT_HASH')
-				|| !Configuration::deleteByName('TOKEN_MERCHANT')
-				|| !Configuration::deleteByName('ORDER_ID')
 				|| !parent::uninstall())
 			return false;
 		return true;
