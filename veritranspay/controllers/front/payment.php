@@ -103,9 +103,9 @@ class VeritransPayPaymentModuleFrontController extends ModuleFrontController
 			'shipping_post_code' => $veritrans->postal_code,
 			'shipping_phone' => $veritrans->phone,
 
-			'token_merchant' => $keys['token_merchant'],
-			'token_browser' => $keys['token_browser'],
-			'error_message' => $keys['error_message'],
+			'token_merchant' => $token_merchant,
+			'token_browser' => $token_browser,
+			'error_message' => $error_message,
 
 			'nbProducts' => $cart->nbProducts(),
 			'cust_currency' => $cart->id_currency,
