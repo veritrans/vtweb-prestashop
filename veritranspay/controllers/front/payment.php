@@ -41,7 +41,6 @@ class VeritransPayPaymentModuleFrontController extends ModuleFrontController
 			'{merchant_hash}' => nl2br(Configuration::get('MERCHANT_HASH'))
 		);
 
-		// $rand = $this->generateRandStr(10);
 		$veritrans->settlement_type = '01';
 		$veritrans->order_id = uniqid();
 		$veritrans->session_id = session_id();
@@ -82,8 +81,8 @@ class VeritransPayPaymentModuleFrontController extends ModuleFrontController
 		$token_merchant = $keys['token_merchant'];
 		$error_message = $keys['error_message'];
 
-
 		$this->context->smarty->assign(array(
+			'cart' => $cart,
 			'shipping' => $shipping_cost,
 			'session_id' => $veritrans->session_id,
 			'url' => $url,
@@ -103,9 +102,9 @@ class VeritransPayPaymentModuleFrontController extends ModuleFrontController
 			'shipping_post_code' => $veritrans->postal_code,
 			'shipping_phone' => $veritrans->phone,
 
-			'token_merchant' => $keys['token_merchant'],
-			'token_browser' => $keys['token_browser'],
-			'error_message' => $keys['error_message'],
+			'token_merchant' => $token_merchant,
+			'token_browser' => $token_browser,
+			'error_message' => $error_message,
 
 			'nbProducts' => $cart->nbProducts(),
 			'cust_currency' => $cart->id_currency,
@@ -115,7 +114,7 @@ class VeritransPayPaymentModuleFrontController extends ModuleFrontController
 			'this_path_ssl' => Tools::getShopDomainSsl(true, true).__PS_BASE_URI__.'modules/'.$this->module->name.'/'
 		));
 
-		$this->insertTransaction($cart->id_customer, $veritrans->order_id, $token_merchant);
+		$this->insertTransaction($cart->id_customer, $cart->id, $currency->id, $veritrans->order_id, $token_merchant);
 		$this->setTemplate('payment_execution.tpl');
 	}
 
@@ -132,6 +131,8 @@ class VeritransPayPaymentModuleFrontController extends ModuleFrontController
 				"COMMODITY_NAME2" => $aProduct['name']
 			);
 		}
+
+		if($shipping_cost != 0){
 			$commodities[] = array(
 				"COMMODITY_ID" => '00',
 				"COMMODITY_PRICE" => $shipping_cost,
@@ -139,14 +140,17 @@ class VeritransPayPaymentModuleFrontController extends ModuleFrontController
 				"COMMODITY_NAME1" => 'Shipping Cost',
 				"COMMODITY_NAME2" => 'Biaya Pengiriman'
 			);
+		}
 		return $commodities;
 	}
 
-  	function insertTransaction($customer_id, $request_id, $token_merchant)
+  	function insertTransaction($customer_id, $id_cart, $id_currency, $request_id, $token_merchant)
   	{
   		$sql = 'INSERT INTO `'._DB_PREFIX_.'vt_transaction`
-  				(`id_customer`, `request_id`, `token_merchant`)
+  				(`id_customer`, `id_cart`, `id_currency`, `request_id`, `token_merchant`)
   				VALUES ('.(int)$customer_id.',
+						'.(int)$id_cart.',
+						'.(int)$id_currency.',
   						\''.$request_id.'\',
   						\''.$token_merchant.'\')';
 		Db::getInstance()->Execute($sql);

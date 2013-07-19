@@ -6,95 +6,61 @@ class VeritransPayValidationModuleFrontController extends ModuleFrontController
 	 * @see FrontController::postProcess()
 	 */
 	public function postProcess()
-	{
-		$cart = $this->context->cart;
-		if ($cart->id_customer == 0 || $cart->id_address_delivery == 0 || $cart->id_address_invoice == 0 || !$this->module->active)
-			Tools::redirect('index.php?controller=order&step=1');
+	{	
+		require_once 'library/veritrans.php';
+		require_once 'library/veritrans_notification.php';
+		$veritrans_notification = new VeritransNotification($_POST);
+		
+		$transaction = $this->getTransaction($veritrans_notification->orderId);
 
-		// Check that this payment option is still available in case the customer changed his address just before the end of the checkout process
-		$authorized = false;
-		foreach (Module::getPaymentModules() as $module)
-			if ($module['name'] == 'veritranspay')
-			{
-				$authorized = true;
-				break;
-			}
-		if (!$authorized)
-			die($this->module->l('This payment method is not available.', 'validation'));
+		$token_merchant = $transaction['token_merchant'];
+		$customer = new Customer($transaction['id_customer']); print_r($customer);echo '<br/>';
+		$cart = new Cart($transaction['id_cart']); print_r($cart); echo '<br/>';
+		$currency = new Currency($transaction['id_currency']); print_r($currency);echo '<br/>';
+		$total = (float)$cart->getOrderTotal(true, Cart::BOTH); echo $total;echo '<br/>';
 
-		$customer = new Customer($cart->id_customer);
-		if (!Validate::isLoadedObject($customer))
-			Tools::redirect('index.php?controller=order&step=1');
-
-		$currency = $this->context->currency;
-		$total = (float)$cart->getOrderTotal(true, Cart::BOTH);
+		
 		$mailVars = array(
 			'{merchant_id}' => Configuration::get('MERCHANT_ID'),
 			'{merchant_hash}' => nl2br(Configuration::get('MERCHANT_HASH'))
 		);
 
-		require_once 'library/veritrans_notification.php';
-		$veritrans_notification = new VeritransNotification($_POST);
-
-		// Get the order detail stored by the merchant
-		$id_customer = $this->context->cookie->id_customer.'<br/>';
-		$recentTransaction = $this->getRecentOrder($id_customer);
-		$data = $this->getData($id_customer, $recentTransaction);
-
-		$current_request = $data['request_id'];
-		$token_merchant = $data['token_merchant'];
-
-		// echo 'req 1 : '.$current_request;
-		// echo '<br>';
-		// echo '<br/>t1 : '.$token_merchant.'<br/>';
-		// echo '<br>';
-
-		// echo 'req 2 : '.$veritrans_notification->orderId;
-		// echo '<br>';
-		// echo 't2 : '.$veritrans_notification->TOKEN_MERCHANT.'<br/>';
-		// echo '<br>';	
-
-		// $status = $veritrans_notification->mStatus;
-
+		
 		/** Validating order*/
-		if( $current_request.'' == $veritrans_notification->orderId.'' && $token_merchant.'' == $veritrans_notification->TOKEN_MERCHANT.'' )
+		if($token_merchant == $veritrans_notification->TOKEN_MERCHANT)
 		{
-			/** case success ???????*/
-			if ($veritrans_notification->mStatus == "success")
-			{
+			if ($veritrans_notification->mStatus == 'success')
+			{	
 				$this->module->validateOrder($cart->id, Configuration::get('PS_OS_PAYMENT'), $total, $this->module->displayName, NULL, $mailVars, (int)$currency->id, false, $customer->secure_key);			
 				$status = "Payment Success";
-				$this->validate($this->module->currentOrder, $recentTransaction, $status);
-				// echo 'transaction success';
+				$this->validate($this->module->currentOrder, $veritrans_notification->orderId, $status);
+		
 			}
-			elseif ($veritrans_notification->mStatus == "failure")
+			elseif ($veritrans_notification->mStatus == 'failure')
 			{
 				$this->module->validateOrder($cart->id, Configuration::get('PS_OS_ERROR'), $total, $this->module->displayName, NULL, $mailVars, (int)$currency->id, false, $customer->secure_key);
 				$status = "Payment Error";
-				$this->validate($this->module->currentOrder, $recentTransaction, $status);
-				// echo 'transaction failure';
+				$this->validate($this->module->currentOrder, $veritrans_notification->orderId, $status);
+			}
+			else
+			{
+				echo 'other<br/>';
 			}		
+		}
+		else
+		{
+			echo 'no transaction<br/>';
 		}
 		exit;
 	}
 
-	function getRecentOrder($id_customer)
+	function getTransaction($request_id)
 	{
-		$sql = 'SELECT MAX(`id_transaction`)
+		$sql = 'SELECT *
 				FROM `'._DB_PREFIX_.'vt_transaction`
-				WHERE `id_customer` = '.(int)$id_customer.'';
+				WHERE `request_id` = \''.$request_id.'\'';
 		$result = Db::getInstance()->getRow($sql);
-  		return $result['MAX(`id_transaction`)'];
-	}
-
-	function getData($id_customer, $id_transaction)
-	{
-		$sql = 'SELECT `request_id`, `token_merchant`
-				FROM `'._DB_PREFIX_.'vt_transaction`
-				WHERE `id_customer` = '.(int)$id_customer.'
-				AND `id_transaction` = '.(int)$id_transaction.'';
-		$result = Db::getInstance()->getRow($sql);
-		return $result;
+		return $result;	
 	}
 
 	function validate($id_transaction, $id_order, $order_status)
@@ -107,3 +73,4 @@ class VeritransPayValidationModuleFrontController extends ModuleFrontController
 		Db::getInstance()->Execute($sql);
   	}
 }
+
