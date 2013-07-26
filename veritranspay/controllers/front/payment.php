@@ -55,10 +55,8 @@ class VeritransPayPaymentModuleFrontController extends ModuleFrontController
 		$delivery_address = new Address($cart->id_address_delivery);
 
 		if($this->context->cart->isVirtualCart()){
-			echo 'virtual<br/>';
 			$veritrans->required_shipping_address = '0';
 		} else {
-			echo 'not virtual<br/>';
 			$veritrans->required_shipping_address = '1';
 		}
 
