@@ -54,22 +54,43 @@ class VeritransPayPaymentModuleFrontController extends ModuleFrontController
 		$billing_address = new Address($cart->id_address_invoice);
 		$delivery_address = new Address($cart->id_address_delivery);
 
-		$veritrans->billing_address_different_with_shipping_address = '1';
-		$veritrans->required_shipping_address = '0';
+		if($this->context->cart->isVirtualCart()){
+			echo 'virtual<br/>';
+			$veritrans->required_shipping_address = '0';
+		} else {
+			echo 'not virtual<br/>';
+			$veritrans->required_shipping_address = '1';
+		}
 
-		$veritrans->first_name = $delivery_address->firstname;
-		$veritrans->last_name = $delivery_address->lastname;
-		$veritrans->address1 = $delivery_address->address1;
-		$veritrans->address2 = $delivery_address->address2;
-		$veritrans->city = $delivery_address->city;
+		$veritrans->billing_address_different_with_shipping_address = '1';
+		if($billing_address == $delivery_address)
+		{
+			$veritrans->billing_address_different_with_shipping_address = '0';
+		}
+
+		$veritrans->first_name = $billing_address->firstname;
+		$veritrans->last_name = $billing_address->lastname;
+		$veritrans->address1 = $billing_address->address1;
+		$veritrans->address2 = $billing_address->address2;
+		$veritrans->city = $billing_address->city;
+
+		$veritrans->shipping_first_name = $delivery_address->firstname;
+		$veritrans->shipping_last_name = $delivery_address->lastname;
+		$veritrans->shipping_address1 = $delivery_address->address1;
+		$veritrans->shipping_address2 = $delivery_address->address2;
+		$veritrans->shipping_city = $delivery_address->city;
 
 		require_once 'library/isocountry.php';
-		$iso_code = Country::getIsoById($delivery_address->id_country);
+		$iso_code1 = Country::getIsoById($billing_address->id_country);
+		$iso_code2 = Country::getIsoById($delivery_address->id_country);
 		$iso_A3 = new ISOCountry;
-		$veritrans->country_code = $iso_A3->isoA3[$iso_code];
+		$veritrans->country_code = $iso_A3->isoA3[$iso_code1];
+		$veritrans->shipping_country_code = $iso_A3->isoA3[$iso_code2];
 
-		$veritrans->postal_code = $delivery_address->postcode;
-		$veritrans->phone = $delivery_address->phone_mobile;
+		$veritrans->postal_code = $billing_address->postcode;
+		$veritrans->shipping_postal_code = $delivery_address->postcode;
+		$veritrans->phone = $billing_address->phone_mobile;
+		$veritrans->shipping_phone = $delivery_address->phone_mobile;
 		$veritrans->email = $customer->email;
 		
 		$commodities = $this->addCommodities($cart, $shipping_cost);
@@ -93,14 +114,24 @@ class VeritransPayPaymentModuleFrontController extends ModuleFrontController
 			'gross_ammount' => $veritrans->gross_amount,
 			'customer_specification_flag' => $veritrans->billing_address_different_with_shipping_address,
 			'shipping_flag' => $veritrans->required_shipping_address,
-			'shipping_fname' => $veritrans->first_name,
-			'shipping_lname' => $veritrans->last_name,
-			'shipping_add1' => $veritrans->address1,
-			'shipping_add2' => $veritrans->address2,
-			'shipping_city' => $veritrans->city,
-			'shipping_country_code' => $veritrans->country_code,
-			'shipping_post_code' => $veritrans->postal_code,
-			'shipping_phone' => $veritrans->phone,
+
+			'fname' => $veritrans->first_name,
+			'lname' => $veritrans->last_name,
+			'add1' => $veritrans->address1,
+			'add2' => $veritrans->address2,
+			'city' => $veritrans->city,
+			'country_code' => $veritrans->country_code,
+			'post_code' => $veritrans->postal_code,
+			'phone' => $veritrans->phone,
+
+			'shipping_fname' => $veritrans->shipping_first_name,
+			'shipping_lname' => $veritrans->shipping_last_name,
+			'shipping_add1' => $veritrans->shipping_address1,
+			'shipping_add2' => $veritrans->shipping_address2,
+			'shipping_city' => $veritrans->shipping_city,
+			'shipping_country_code' => $veritrans->shipping_country_code,
+			'shipping_post_code' => $veritrans->shipping_postal_code,
+			'shipping_phone' => $veritrans->shipping_phone,
 
 			'token_merchant' => $token_merchant,
 			'token_browser' => $token_browser,
