@@ -54,10 +54,24 @@ class VeritransPayPaymentModuleFrontController extends ModuleFrontController
 		$billing_address = new Address($cart->id_address_invoice);
 		$delivery_address = new Address($cart->id_address_delivery);
 
+		require_once 'library/isocountry.php';
+		$iso_A3 = new ISOCountry;
+
 		if($this->context->cart->isVirtualCart()){
 			$veritrans->required_shipping_address = '0';
 		} else {
 			$veritrans->required_shipping_address = '1';
+
+			$veritrans->shipping_first_name = $delivery_address->firstname;
+			$veritrans->shipping_last_name = $delivery_address->lastname;
+			$veritrans->shipping_address1 = $delivery_address->address1;
+			$veritrans->shipping_address2 = $delivery_address->address2;
+			$veritrans->shipping_city = $delivery_address->city;
+
+			$iso_code2 = Country::getIsoById($delivery_address->id_country);
+			$veritrans->shipping_country_code = $iso_A3->isoA3[$iso_code2];
+			$veritrans->shipping_postal_code = $delivery_address->postcode;
+			$veritrans->shipping_phone = $delivery_address->phone_mobile;
 		}
 
 		$veritrans->billing_address_different_with_shipping_address = '1';
@@ -72,23 +86,11 @@ class VeritransPayPaymentModuleFrontController extends ModuleFrontController
 		$veritrans->address2 = $billing_address->address2;
 		$veritrans->city = $billing_address->city;
 
-		$veritrans->shipping_first_name = $delivery_address->firstname;
-		$veritrans->shipping_last_name = $delivery_address->lastname;
-		$veritrans->shipping_address1 = $delivery_address->address1;
-		$veritrans->shipping_address2 = $delivery_address->address2;
-		$veritrans->shipping_city = $delivery_address->city;
-
-		require_once 'library/isocountry.php';
-		$iso_code1 = Country::getIsoById($billing_address->id_country);
-		$iso_code2 = Country::getIsoById($delivery_address->id_country);
-		$iso_A3 = new ISOCountry;
+		$iso_code1 = Country::getIsoById($billing_address->id_country);		
+		
 		$veritrans->country_code = $iso_A3->isoA3[$iso_code1];
-		$veritrans->shipping_country_code = $iso_A3->isoA3[$iso_code2];
-
 		$veritrans->postal_code = $billing_address->postcode;
-		$veritrans->shipping_postal_code = $delivery_address->postcode;
 		$veritrans->phone = $billing_address->phone_mobile;
-		$veritrans->shipping_phone = $delivery_address->phone_mobile;
 		$veritrans->email = $customer->email;
 		
 		$commodities = $this->addCommodities($cart, $shipping_cost);
