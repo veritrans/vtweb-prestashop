@@ -19,8 +19,10 @@ class VeritransPayPaymentModuleFrontController extends ModuleFrontController
 		$cart = $this->context->cart;
 		if (!$this->module->checkCurrency($cart))
 			Tools::redirect('index.php?controller=order');
-
+		
 		require_once 'library/veritrans.php';
+		$usd = Configuration::get('KURS');
+		$cf = Configuration::get('CONVENIENCE_FEE')*0.01;
 		$veritrans = new Veritrans();
 		$url = 'https://payments.veritrans.co.id/web1/paymentStart.action';
 
@@ -48,9 +50,16 @@ class VeritransPayPaymentModuleFrontController extends ModuleFrontController
 		$veritrans->finish_payment_return_url = $link->getModuleLink('veritranspay', 'success');
 		$veritrans->unfinish_payment_return_url = $link->getPageLink('order');
 		$veritrans->error_payment_return_url = $link->getModuleLink('veritranspay', 'error');
-
-
-		$veritrans->gross_amount = number_format($cart->getOrderTotal(true, Cart::BOTH), 0, '', '');
+		
+		$gross_1 = $usd * number_format($cart->getOrderTotal(true, Cart::BOTH), 0, '', '');
+		$convenience_fee= number_format($cf * $gross_1, 0, '', '');
+		
+		if($convenience_fee!=0){
+			$veritrans->gross_amount = ($gross_1 + $convenience_fee);
+		}else{
+			$veritrans->gross_amount = ($gross_1);
+		}
+		
 		$billing_address = new Address($cart->id_address_invoice);
 		$delivery_address = new Address($cart->id_address_delivery);
 
@@ -91,12 +100,9 @@ class VeritransPayPaymentModuleFrontController extends ModuleFrontController
 			}
 			
 		}
-
+	
 		
-
-		
-		
-		$commodities = $this->addCommodities($cart, $shipping_cost);
+		$commodities = $this->addCommodities($cart, $shipping_cost, $convenience_fee, $usd);
 		$veritrans->commodity = $commodities;
 
 		$keys = $veritrans->get_keys();
@@ -152,18 +158,22 @@ class VeritransPayPaymentModuleFrontController extends ModuleFrontController
 		$this->setTemplate('payment_execution.tpl');
 	}
 
-	public function addCommodities($cart, $shipping_cost)
+	public function addCommodities($cart, $shipping_cost, $convenience_fee, $usd)
 	{
+		
 		$products = $cart->getProducts();
 		$commodities = array();
+		$price=0;
 		foreach ($products as $aProduct) {
+				
 			$commodities[] = array(
 				"COMMODITY_ID" => $aProduct['id_product'],
-				"COMMODITY_PRICE" => number_format($aProduct['price_wt'], 0, '', ''),
+				"COMMODITY_PRICE" =>  number_format($aProduct['price_wt']*$usd, 0, '', ''),
 				"COMMODITY_QTY" => $aProduct['cart_quantity'],
 				"COMMODITY_NAME1" => $aProduct['name'],
 				"COMMODITY_NAME2" => $aProduct['name']
 			);
+			
 		}
 
 		if($shipping_cost != 0){
@@ -174,9 +184,24 @@ class VeritransPayPaymentModuleFrontController extends ModuleFrontController
 				"COMMODITY_NAME1" => 'Shipping Cost',
 				"COMMODITY_NAME2" => 'Biaya Pengiriman'
 			);
+			
 		}
+
+		
+		if($convenience_fee!=0){
+			$commodities[] = array(
+				"COMMODITY_ID" => '00',
+				"COMMODITY_PRICE" => $convenience_fee,
+				"COMMODITY_QTY" => '1',
+				"COMMODITY_NAME1" => 'Convenience Fee',
+				"COMMODITY_NAME2" => 'Convenience Fee'
+			);
+		}
+			
 		return $commodities;
 	}
+
+
 
   	function insertTransaction($customer_id, $id_cart, $id_currency, $request_id, $token_merchant)
   	{
