@@ -10,6 +10,9 @@ class VeritransPay extends PaymentModule
 
 	public $merchant_id;
 	public $merchant_hash;
+	public $kurs;
+	public $convenience_fee;
+
 
 	public function __construct()
 	{
@@ -21,12 +24,18 @@ class VeritransPay extends PaymentModule
 		$this->currencies = true;
 		$this->currencies_mode = 'checkbox';
 
-		$config = Configuration::getMultiple(array('MERCHANT_ID', 'MERCHANT_HASH'));
+		$config = Configuration::getMultiple(array('MERCHANT_ID', 'MERCHANT_HASH','KURS','CONVENIENCE_FEE'));
 		if (isset($config['MERCHANT_ID']))
 			$this->merchant_id = $config['MERCHANT_ID'];
 		if (isset($config['MERCHANT_HASH']))
 			$this->merchant_hash = $config['MERCHANT_HASH'];
-
+		if (isset($config['KURS']))
+			$this->kurs = $config['KURS'];
+		else Configuration::set('KURS',1);
+		if (isset($config['CONVENIENCE_FEE']))
+			$this->convenience_fee = $config['CONVENIENCE_FEE'];
+		else Configuration::set('CONVENIENCE_FEE',0);
+		
 		parent::__construct();
 
 		$this->displayName = $this->l('Veritrans Pay');
@@ -60,6 +69,8 @@ class VeritransPay extends PaymentModule
 	{
 		if (!Configuration::deleteByName('MERCHANT_ID')
 				|| !Configuration::deleteByName('MERCHANT_HASH')
+				|| !Configuration::deleteByName('KURS')
+				|| !Configuration::deleteByName('CONVENIENCE_FEE')
 				|| !parent::uninstall())
 			return false;
 		return true;
@@ -71,7 +82,7 @@ class VeritransPay extends PaymentModule
 		{
 			if (!Tools::getValue('merchant_hash'))
 				$this->_postErrors[] = $this->l('Merchant Hash are required.');
-			elseif (!Tools::getValue('merchant_id'))
+			else if (!Tools::getValue('merchant_id'))
 				$this->_postErrors[] = $this->l('Merchant ID is required.');
 		}
 	}
@@ -82,6 +93,8 @@ class VeritransPay extends PaymentModule
 		{
 			Configuration::updateValue('MERCHANT_ID', Tools::getValue('merchant_id'));
 			Configuration::updateValue('MERCHANT_HASH', Tools::getValue('merchant_hash'));
+			Configuration::updateValue('KURS', Tools::getValue('kurs'));
+			Configuration::updateValue('CONVENIENCE_FEE', Tools::getValue('convenience_fee'));
 		}
 		$this->_html .= '<div class="conf confirm"> '.$this->l('Settings updated').'</div>';
 	}
@@ -101,13 +114,22 @@ class VeritransPay extends PaymentModule
 				<table border="0" width="500" cellpadding="0" cellspacing="0" id="form">
 					<tr><td colspan="2">'.$this->l('Please specify Merchant ID.').'.<br /><br /></td></tr>
 					<tr>
-						<td width="130" style="height: 35px;">'.$this->l('Merchant ID').'</td>
+						<td width="130" style="vertical-align: top;">'.$this->l('Merchant ID*').'</td>
 						<td><input type="text" name="merchant_id" value="'.htmlentities(Tools::getValue('merchant_id', $this->merchant_id), ENT_COMPAT, 'UTF-8').'" style="width: 300px;" /></td>
 					</tr>
 					<tr>
-						<td width="130" style="vertical-align: top;">'.$this->l('Merchant Hash').'</td>
+						<td width="130" style="vertical-align: top;">'.$this->l('Merchant Hash*').'</td>
 						<td><input type="text" name="merchant_hash" value="'.htmlentities(Tools::getValue('merchant_hash', $this->merchant_hash), ENT_COMPAT, 'UTF-8').'" style="width: 300px;" /></td>
 					</tr>
+					<tr>
+						<td width="130" style="vertical-align: top;">'.$this->l('Kurs').'</td>
+						<td><input type="text" name="kurs" value="'.htmlentities(Tools::getValue('kurs', $this->kurs), ENT_COMPAT, 'UTF-8').'" style="width: 300px;" /></td>
+					</tr>
+					<tr>
+						<td width="130" style="vertical-align: top;">'.$this->l('Convenience Fee (%)').'</td>
+						<td><input type="text" name="convenience_fee" value="'.htmlentities(Tools::getValue('convenience_fee', $this->convenience_fee), ENT_COMPAT, 'UTF-8').'" style="width: 300px;" /></td>
+					</tr>
+
 				</table>
 				<br/>
 				<input class="button" name="btnSubmit" value="'.$this->l('Update settings').'" type="submit" />
