@@ -179,7 +179,7 @@ class VeritransPayPaymentModuleFrontController extends ModuleFrontController
 		if($shipping_cost != 0){
 			$commodities[] = array(
 				"COMMODITY_ID" => '00',
-				"COMMODITY_PRICE" => $shipping_cost,
+				"COMMODITY_PRICE" => number_format($shipping_cost*$usd, 0, '', ''),
 				"COMMODITY_QTY" => '1',
 				"COMMODITY_NAME1" => 'Shipping Cost',
 				"COMMODITY_NAME2" => 'Biaya Pengiriman'
@@ -191,7 +191,7 @@ class VeritransPayPaymentModuleFrontController extends ModuleFrontController
 		if($convenience_fee!=0){
 			$commodities[] = array(
 				"COMMODITY_ID" => '00',
-				"COMMODITY_PRICE" => $convenience_fee,
+				"COMMODITY_PRICE" => number_format($convenience_fee, 0, '', ''),
 				"COMMODITY_QTY" => '1',
 				"COMMODITY_NAME1" => 'Convenience Fee',
 				"COMMODITY_NAME2" => 'Convenience Fee'
