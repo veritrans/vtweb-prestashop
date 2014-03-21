@@ -47,7 +47,7 @@ class VeritransPayPaymentModuleFrontController extends ModuleFrontController
 		$veritrans->order_id = uniqid();
 		$veritrans->session_id = session_id();
 				
-		$veritrans->finish_payment_return_url = $link->getModuleLink('veritranspay', 'success');
+		$veritrans->finish_payment_return_url = $link->getModuleLink('veritranspay', 'validation');
 		$veritrans->unfinish_payment_return_url = $link->getPageLink('order');
 		$veritrans->error_payment_return_url = $link->getModuleLink('veritranspay', 'error');
 		

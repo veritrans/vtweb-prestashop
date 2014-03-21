@@ -266,6 +266,10 @@ class Veritrans
        $commodity["COMMODITY_UNIT"] = $commodity["COMMODITY_PRICE"];
        unset($commodity["COMMODITY_PRICE"]);
      }
+     $commodity['COMMODITY_NAME1'] = substr($commodity['COMMODITY_NAME1'], 0, 20);
+     $commodity['COMMODITY_NAME2'] = substr($commodity['COMMODITY_NAME2'], 0, 20);
+     $commodity['COMMODITY_NAME1'] = preg_replace("/[^A-Za-z0-9 \-\_\'\,\.\@]/", '', $commodity['COMMODITY_NAME1']);
+     $commodity['COMMODITY_NAME2'] = preg_replace("/[^A-Za-z0-9 \-\_\'\,\.\@]/", '', $commodity['COMMODITY_NAME2']);
      
      return $commodity;
    }
