@@ -12,29 +12,57 @@ class VeritransPay extends PaymentModule
 	public $merchant_hash;
 	public $kurs;
 	public $convenience_fee;
-
+	public $veritrans_client_key;
+	public $veritrans_server_key;
+	public $veritrans_api_version;
+	public $veritrans_installments;
+	public $veritrans_3d_secure;
+	public $veritrans_payment_type;
 
 	public function __construct()
 	{
 		$this->name = 'veritranspay';
 		$this->tab = 'payments_gateways';
-		$this->version = '0.5';
+		$this->version = '0.6';
 		$this->author = 'Veritrans';
+		$this->bootstrap = true;
 		
 		$this->currencies = true;
 		$this->currencies_mode = 'checkbox';
+		$this->convenience_fee = 0;
 
-		$config = Configuration::getMultiple(array('MERCHANT_ID', 'MERCHANT_HASH','KURS','CONVENIENCE_FEE'));
-		if (isset($config['MERCHANT_ID']))
-			$this->merchant_id = $config['MERCHANT_ID'];
-		if (isset($config['MERCHANT_HASH']))
-			$this->merchant_hash = $config['MERCHANT_HASH'];
-		if (isset($config['KURS']))
-			$this->kurs = $config['KURS'];
-		else Configuration::set('KURS',1);
-		if (isset($config['CONVENIENCE_FEE']))
-			$this->convenience_fee = $config['CONVENIENCE_FEE'];
-		else Configuration::set('CONVENIENCE_FEE',0);
+		$config_keys = array(
+			'MERCHANT_ID', 
+			'MERCHANT_HASH',
+			'VERITRANS_CLIENT_KEY',
+			'VERITRANS_SERVER_KEY',
+			'VERITRANS_API_VERSION',
+			'VERITRANS_PAYMENT_TYPE',
+			'VERITRANS_3D_SECURE',
+			'KURS',
+			'CONVENIENCE_FEE');
+
+		foreach (array('BNI', 'MANDIRI', 'CIMB') as $bank) {
+			foreach (array(3, 6, 9, 12, 18, 24) as $months) {
+				array_push($config_keys, 'VERITRANS_INSTALLMENTS_' . $bank . '_' . $months);
+			}
+		}
+
+		$config = Configuration::getMultiple($config_keys);
+
+		foreach ($config_keys as $key) {
+			if (isset($config[$key]))
+				$this->{strtolower($key)} = $config[$key];
+		}
+		
+		// if (isset($config['MERCHANT_HASH']))
+		// 	$this->merchant_hash = $config['MERCHANT_HASH'];
+		// if (isset($config['KURS']))
+		// 	$this->kurs = $config['KURS'];
+		// else Configuration::set('KURS',1);
+		// if (isset($config['CONVENIENCE_FEE']))
+		// 	$this->convenience_fee = $config['CONVENIENCE_FEE'];
+		// else Configuration::set('CONVENIENCE_FEE',0);
 		
 		parent::__construct();
 
@@ -101,11 +129,171 @@ class VeritransPay extends PaymentModule
 
 	private function _displayVeritransPay()
 	{
+		$this->_html .= $this->display(__FILE__, 'infos.tpl');
+	}
+
+	private function _displayVeritransPayOld()
+	{
 		$this->_html .= '<img src="../modules/veritranspay/veritrans.jpg" style="float:left; margin-right:15px;"><b>'.$this->l('This module allows payment via veritrans.').'</b><br/><br/>
 		'.$this->l('Payment via veritrans.').'<br /><br /><br />';
 	}
 
 	private function _displayForm()
+	{
+		$installments_options = array();
+		foreach (array('BNI', 'MANDIRI', 'CIMB') as $bank) {
+			$installments_options[$bank] = array();
+			foreach (array(3, 6, 9, 12, 18, 24) as $months) {
+				array_push($installments_options[$bank], array(
+					'id_option' => $bank . '_' . $months,
+					'name' => $months . ' Months'
+					));
+			}
+		}
+
+		$fields_form = array(
+			'form' => array(
+				'legend' => array(
+					'title' => 'Basic Information',
+					'icon' => 'icon-cogs'
+					),
+				'input' => array(
+					array(
+						'type' => 'select',
+						'label' => 'API Version',
+						'name' => 'VERITRANS_API_VERSION',
+						'is_bool' => false,
+						'options' => array(
+							'query' => array(
+								array(
+									'id_option' => 1,
+									'name' => 'v1'
+									),
+								array(
+									'id_option' => 2,
+									'name' => 'v2'
+									)
+								),
+							'id' => 'id_option',
+							'name' => 'name'
+							)
+						),
+					array(
+						'type' => 'text',
+						'label' => 'Merchant ID',
+						'name' => 'MERCHANT_ID',
+						'desc' => 'Consult to your Merchant Administration Portal for the value of this field.'
+						),
+					array(
+						'type' => 'text',
+						'label' => 'Merchant Hash Key',
+						'name' => 'MERCHANT_HASH',
+						'desc' => 'Consult to your Merchant Administration Portal for the value of this field.'
+						),
+					array(
+						'type' => 'text',
+						'label' => 'VT-Direct Client Key',
+						'name' => 'VERITRANS_CLIENT_KEY',
+						'desc' => 'Consult to your Merchant Administration Portal for the value of this field.'
+						),
+					array(
+						'type' => 'text',
+						'label' => 'VT-Direct Server Key',
+						'name' => 'VERITRANS_SERVER_KEY',
+						'desc' => 'Consult to your Merchant Administration Portal for the value of this field.'
+						),
+					array(
+						'type' => 'select',
+						'label' => 'Payment Type',
+						'name' => 'VERITRANS_PAYMENT_TYPE',
+						'is_bool' => false,
+						'options' => array(
+							'query' => array(
+								array(
+									'id_option' => 'vtweb',
+									'name' => 'VT-Web'
+									),
+								array(
+									'id_option' => 'vtdirect',
+									'name' => 'VT-Direct'
+									)
+								),
+							'id' => 'id_option',
+							'name' => 'name'
+							)
+						),
+					array(
+						'type' => 'checkbox',
+						'label' => 'Enable BNI Installments?',
+						'name' => 'VERITRANS_INSTALLMENTS',
+						'values' => array(
+							'query' => $installments_options['BNI'],
+							'id' => 'id_option',
+							'name' => 'name'
+							)
+						),
+					array(
+						'type' => 'checkbox',
+						'label' => 'Enable Mandiri Installments?',
+						'name' => 'VERITRANS_INSTALLMENTS',
+						'values' => array(
+							'query' => $installments_options['MANDIRI'],
+							'id' => 'id_option',
+							'name' => 'name'
+							)
+						),
+					array(
+						'type' => 'checkbox',
+						'label' => 'Enable CIMB Installments?',
+						'name' => 'VERITRANS_INSTALLMENTS',
+						'values' => array(
+							'query' => $installments_options['CIMB'],
+							'id' => 'id_option',
+							'name' => 'name'
+							)
+						),
+					array(
+						'type' => 'text',
+						'label' => 'IDR Conversion Rate',
+						'name' => 'KURS',
+						'desc' => 'Veritrans will use this rate to convert prices to IDR when there are no default conversion system.'
+						),
+					),
+				'submit' => array(
+					'title' => $this->l('Save'),
+					)
+				)
+			);
+
+		$helper = new HelperForm();
+		$helper->show_toolbar = false;
+		$helper->table =  $this->table;
+		$lang = new Language((int)Configuration::get('PS_LANG_DEFAULT'));
+		$helper->default_form_language = $lang->id;
+		$helper->allow_employee_form_lang = Configuration::get('PS_BO_ALLOW_EMPLOYEE_FORM_LANG') ? Configuration::get('PS_BO_ALLOW_EMPLOYEE_FORM_LANG') : 0;
+		$this->fields_form = array();
+		$helper->id = (int)Tools::getValue('id_carrier');
+		$helper->identifier = $this->identifier;
+		$helper->submit_action = 'btnSubmit';
+		$helper->currentIndex = $this->context->link->getAdminLink('AdminModules', false).'&configure='.$this->name.'&tab_module='.$this->tab.'&module_name='.$this->name;
+		$helper->token = Tools::getAdminTokenLite('AdminModules');
+		$helper->tpl_vars = array(
+			'fields_value' => $this->getConfigFieldsValues(),
+			'languages' => $this->context->controller->getLanguages(),
+			'id_language' => $this->context->language->id
+		);
+
+		$this->_html .= $helper->generateForm(array($fields_form));
+	}
+
+	public function getConfigFieldsValues()
+	{
+		return array(
+			'MERCHANT_ID' => Tools::getValue('MERCHANT_ID', Configuration::get('MERCHANT_ID'))
+		);
+	}
+
+	private function _displayFormOld()
 	{
 		$this->_html .=
 		'<form action="'.Tools::htmlentitiesUTF8($_SERVER['REQUEST_URI']).'" method="post">
@@ -139,7 +327,7 @@ class VeritransPay extends PaymentModule
 
 	public function getContent()
 	{
-		$this->_html = '<h2>'.$this->displayName.'</h2>';
+		// $this->_html = '<h2>'.$this->displayName.'</h2>';
 
 		if (Tools::isSubmit('btnSubmit'))
 		{

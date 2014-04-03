@@ -1,5 +1,7 @@
 <?php
 
+require_once 'library/veritrans.php';
+
 session_start();
 
 class VeritransPayPaymentModuleFrontController extends ModuleFrontController
@@ -20,7 +22,6 @@ class VeritransPayPaymentModuleFrontController extends ModuleFrontController
 		if (!$this->module->checkCurrency($cart))
 			Tools::redirect('index.php?controller=order');
 		
-		require_once 'library/veritrans.php';
 		$usd = Configuration::get('KURS');
 		$cf = Configuration::get('CONVENIENCE_FEE')*0.01;
 		$veritrans = new Veritrans();

@@ -1,5 +1,8 @@
 <?php
 
+require_once 'library/veritrans.php';
+require_once 'library/veritrans_notification.php';
+
 class VeritransPayValidationModuleFrontController extends ModuleFrontController
 {
 	/**
@@ -7,18 +10,25 @@ class VeritransPayValidationModuleFrontController extends ModuleFrontController
 	 */
 	public function postProcess()
 	{	
-		require_once 'library/veritrans.php';
-		require_once 'library/veritrans_notification.php';
+		$cart = $this->context->cart;
+		var_dump($cart);
+
 		$veritrans_notification = new VeritransNotification();
-		
 		$transaction = $this->getTransaction($veritrans_notification->orderId);
 
 		$token_merchant = $transaction['token_merchant'];
-		$customer = new Customer($transaction['id_customer']); print_r($customer);echo '<br/>';
-		$cart = new Cart($transaction['id_cart']); print_r($cart); echo '<br/>';
-		$currency = new Currency($transaction['id_currency']); print_r($currency);echo '<br/>';
-		$total = (float)$cart->getOrderTotal(true, Cart::BOTH); echo $total;echo '<br/>';
+		$customer = new Customer($transaction['id_customer']); 
+		var_dump($transaction);
+		var_dump($customer);
 
+		$cart = new Cart($transaction['id_cart']); 
+		var_dump($cart);
+		
+		$currency = new Currency($transaction['id_currency']); 
+		var_dump($currency);
+
+		$total = (float)$cart->getOrderTotal(true, Cart::BOTH); 
+		var_dump($total);
 		
 		$mailVars = array(
 			'{merchant_id}' => Configuration::get('MERCHANT_ID'),
