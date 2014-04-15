@@ -8,16 +8,18 @@ class VeritransPay extends PaymentModule
 	private $_html = '';
 	private $_postErrors = array();
 
-	public $merchant_id;
-	public $merchant_hash;
-	public $kurs;
-	public $convenience_fee;
+	public $veritrans_merchant_id;
+	public $veritrans_merchant_hash;
+	public $veritrans_kurs;
+	public $veritrans_convenience_fee;
 	public $veritrans_client_key;
 	public $veritrans_server_key;
 	public $veritrans_api_version;
 	public $veritrans_installments;
 	public $veritrans_3d_secure;
 	public $veritrans_payment_type;
+
+	public $config_keys;
 
 	public function __construct()
 	{
@@ -29,40 +31,40 @@ class VeritransPay extends PaymentModule
 		
 		$this->currencies = true;
 		$this->currencies_mode = 'checkbox';
-		$this->convenience_fee = 0;
+		$this->veritrans_convenience_fee = 0;
 
-		$config_keys = array(
-			'MERCHANT_ID', 
-			'MERCHANT_HASH',
+		$this->config_keys = array(
+			'VERITRANS_MERCHANT_ID', 
+			'VERITRANS_MERCHANT_HASH',
 			'VERITRANS_CLIENT_KEY',
 			'VERITRANS_SERVER_KEY',
 			'VERITRANS_API_VERSION',
 			'VERITRANS_PAYMENT_TYPE',
 			'VERITRANS_3D_SECURE',
-			'KURS',
-			'CONVENIENCE_FEE');
+			'VERITRANS_KURS',
+			'VERITRANS_CONVENIENCE_FEE');
 
 		foreach (array('BNI', 'MANDIRI', 'CIMB') as $bank) {
 			foreach (array(3, 6, 9, 12, 18, 24) as $months) {
-				array_push($config_keys, 'VERITRANS_INSTALLMENTS_' . $bank . '_' . $months);
+				array_push($this->config_keys, 'VERITRANS_INSTALLMENTS_' . $bank . '_' . $months);
 			}
 		}
 
-		$config = Configuration::getMultiple($config_keys);
+		$config = Configuration::getMultiple($this->config_keys);
 
-		foreach ($config_keys as $key) {
+		foreach ($this->config_keys as $key) {
 			if (isset($config[$key]))
 				$this->{strtolower($key)} = $config[$key];
 		}
 		
-		// if (isset($config['MERCHANT_HASH']))
-		// 	$this->merchant_hash = $config['MERCHANT_HASH'];
-		// if (isset($config['KURS']))
-		// 	$this->kurs = $config['KURS'];
-		// else Configuration::set('KURS',1);
-		// if (isset($config['CONVENIENCE_FEE']))
-		// 	$this->convenience_fee = $config['CONVENIENCE_FEE'];
-		// else Configuration::set('CONVENIENCE_FEE',0);
+		// if (isset($config['VERITRANS_MERCHANT_HASH']))
+		// 	$this->veritrans_merchant_hash = $config['VERITRANS_MERCHANT_HASH'];
+		// if (isset($config['VERITRANS_KURS']))
+		// 	$this->veritrans_kurs = $config['VERITRANS_KURS'];
+		// else Configuration::set('VERITRANS_KURS',1);
+		// if (isset($config['VERITRANS_CONVENIENCE_FEE']))
+		// 	$this->veritrans_convenience_fee = $config['VERITRANS_CONVENIENCE_FEE'];
+		// else Configuration::set('VERITRANS_CONVENIENCE_FEE',0);
 		
 		parent::__construct();
 
@@ -70,15 +72,16 @@ class VeritransPay extends PaymentModule
 		$this->description = $this->l('Accept payments for your products via Veritrans.');
 		$this->confirmUninstall = $this->l('Are you sure about uninstalling Veritrans pay?');
 		
-		if (!isset($this->merchant_id) || !isset($this->merchant_hash))
+		if (!isset($this->veritrans_merchant_id) || !isset($this->veritrans_merchant_hash))
 			$this->warning = $this->l('Merchant ID and Merchant Hash must be configured before using this module.');
+		
 		if (!count(Currency::checkPaymentCurrencies($this->id)))
 			$this->warning = $this->l('No currency has been set for this module.');
 
 		$this->extra_mail_vars = array(
-										'{merchant_id}' => Configuration::get('MERCHANT_ID'),
-										'{merchant_hash}' => nl2br(Configuration::get('MERCHANT_HASH'))
-										);
+			'{veritrans_merchant_id}' => Configuration::get('VERITRANS_MERCHANT_ID'),
+			'{veritrans_merchant_hash}' => nl2br(Configuration::get('VERITRANS_MERCHANT_HASH'))
+			);
 	}
 
 	public function install()
@@ -86,7 +89,7 @@ class VeritransPay extends PaymentModule
 		if (!parent::install() || !$this->registerHook('payment'))
 			return false;
 
-		include_once(_PS_MODULE_DIR_.'/'.$this->name.'/vtpay_install.php');
+		include_once(_PS_MODULE_DIR_ . '/' . $this->name . '/vtpay_install.php');
 		$vtpay_install = new VeritransPayInstall();
 		$vtpay_install->createTable();
 
@@ -95,22 +98,23 @@ class VeritransPay extends PaymentModule
 
 	public function uninstall()
 	{
-		if (!Configuration::deleteByName('MERCHANT_ID')
-				|| !Configuration::deleteByName('MERCHANT_HASH')
-				|| !Configuration::deleteByName('KURS')
-				|| !Configuration::deleteByName('CONVENIENCE_FEE')
-				|| !parent::uninstall())
-			return false;
-		return true;
+		$status = false;
+		foreach ($this->config_keys as $key) {
+			if (!Configuration::deleteByName($key))
+				$status = false;
+		}
+		if (!parent::uninstall())
+			$status = false;
+		return $status;
 	}
 
 	private function _postValidation()
 	{
 		if (Tools::isSubmit('btnSubmit'))
 		{
-			if (!Tools::getValue('merchant_hash'))
+			if (!Tools::getValue('veritrans_merchant_hash'))
 				$this->_postErrors[] = $this->l('Merchant Hash are required.');
-			else if (!Tools::getValue('merchant_id'))
+			else if (!Tools::getValue('veritrans_merchant_id'))
 				$this->_postErrors[] = $this->l('Merchant ID is required.');
 		}
 	}
@@ -119,10 +123,13 @@ class VeritransPay extends PaymentModule
 	{
 		if (Tools::isSubmit('btnSubmit'))
 		{
-			Configuration::updateValue('MERCHANT_ID', Tools::getValue('merchant_id'));
-			Configuration::updateValue('MERCHANT_HASH', Tools::getValue('merchant_hash'));
-			Configuration::updateValue('KURS', Tools::getValue('kurs'));
-			Configuration::updateValue('CONVENIENCE_FEE', Tools::getValue('convenience_fee'));
+			foreach ($this->config_keys as $key) {
+				Configuration::updateValue(strtoupper($key), Tools::getValue($key));
+			}	
+			// Configuration::updateValue('VERITRANS_MERCHANT_ID', Tools::getValue('veritrans_merchant_id'));
+			// Configuration::updateValue('VERITRANS_MERCHANT_HASH', Tools::getValue('veritrans_merchant_hash'));
+			// Configuration::updateValue('VERITRANS_KURS', Tools::getValue('veritrans_kurs'));
+			// Configuration::updateValue('VERITRANS_CONVENIENCE_FEE', Tools::getValue('veritrans_convenience_fee'));
 		}
 		$this->_html .= '<div class="conf confirm"> '.$this->l('Settings updated').'</div>';
 	}
@@ -181,13 +188,13 @@ class VeritransPay extends PaymentModule
 					array(
 						'type' => 'text',
 						'label' => 'Merchant ID',
-						'name' => 'MERCHANT_ID',
+						'name' => 'VERITRANS_MERCHANT_ID',
 						'desc' => 'Consult to your Merchant Administration Portal for the value of this field.'
 						),
 					array(
 						'type' => 'text',
 						'label' => 'Merchant Hash Key',
-						'name' => 'MERCHANT_HASH',
+						'name' => 'VERITRANS_MERCHANT_HASH',
 						'desc' => 'Consult to your Merchant Administration Portal for the value of this field.'
 						),
 					array(
@@ -253,9 +260,17 @@ class VeritransPay extends PaymentModule
 							)
 						),
 					array(
+						'type' => 'checkbox',
+						'label' => 'Enable 3D Secure?',
+						'name' => 'VERITRANS_3D_SECURE',
+						'values' => array(
+							'query' =>
+							)
+						),
+					array(
 						'type' => 'text',
 						'label' => 'IDR Conversion Rate',
-						'name' => 'KURS',
+						'name' => 'VERITRANS_KURS',
 						'desc' => 'Veritrans will use this rate to convert prices to IDR when there are no default conversion system.'
 						),
 					),
@@ -289,7 +304,7 @@ class VeritransPay extends PaymentModule
 	public function getConfigFieldsValues()
 	{
 		return array(
-			'MERCHANT_ID' => Tools::getValue('MERCHANT_ID', Configuration::get('MERCHANT_ID'))
+			'VERITRANS_MERCHANT_ID' => Tools::getValue('VERITRANS_MERCHANT_ID', Configuration::get('VERITRANS_MERCHANT_ID'))
 		);
 	}
 
@@ -303,19 +318,19 @@ class VeritransPay extends PaymentModule
 					<tr><td colspan="2">'.$this->l('Please specify Merchant ID.').'.<br /><br /></td></tr>
 					<tr>
 						<td width="130" style="vertical-align: top;">'.$this->l('Merchant ID*').'</td>
-						<td><input type="text" name="merchant_id" value="'.htmlentities(Tools::getValue('merchant_id', $this->merchant_id), ENT_COMPAT, 'UTF-8').'" style="width: 300px;" /></td>
+						<td><input type="text" name="veritrans_merchant_id" value="'.htmlentities(Tools::getValue('veritrans_merchant_id', $this->veritrans_merchant_id), ENT_COMPAT, 'UTF-8').'" style="width: 300px;" /></td>
 					</tr>
 					<tr>
 						<td width="130" style="vertical-align: top;">'.$this->l('Merchant Hash*').'</td>
-						<td><input type="text" name="merchant_hash" value="'.htmlentities(Tools::getValue('merchant_hash', $this->merchant_hash), ENT_COMPAT, 'UTF-8').'" style="width: 300px;" /></td>
+						<td><input type="text" name="veritrans_merchant_hash" value="'.htmlentities(Tools::getValue('veritrans_merchant_hash', $this->veritrans_merchant_hash), ENT_COMPAT, 'UTF-8').'" style="width: 300px;" /></td>
 					</tr>
 					<tr>
 						<td width="130" style="vertical-align: top;">'.$this->l('Kurs').'</td>
-						<td><input type="text" name="kurs" value="'.htmlentities(Tools::getValue('kurs', $this->kurs), ENT_COMPAT, 'UTF-8').'" style="width: 300px;" /></td>
+						<td><input type="text" name="veritrans_kurs" value="'.htmlentities(Tools::getValue('veritrans_kurs', $this->veritrans_kurs), ENT_COMPAT, 'UTF-8').'" style="width: 300px;" /></td>
 					</tr>
 					<tr>
 						<td width="130" style="vertical-align: top;">'.$this->l('Convenience Fee (%)').'</td>
-						<td><input type="text" name="convenience_fee" value="'.htmlentities(Tools::getValue('convenience_fee', $this->convenience_fee), ENT_COMPAT, 'UTF-8').'" style="width: 300px;" /></td>
+						<td><input type="text" name="veritrans_convenience_fee" value="'.htmlentities(Tools::getValue('veritrans_convenience_fee', $this->veritrans_convenience_fee), ENT_COMPAT, 'UTF-8').'" style="width: 300px;" /></td>
 					</tr>
 
 				</table>
@@ -345,6 +360,11 @@ class VeritransPay extends PaymentModule
 		$this->_displayForm();
 
 		return $this->_html;
+	}
+
+	public function hookHeader($params)
+	{
+		
 	}
 
 	public function hookPayment($params)
