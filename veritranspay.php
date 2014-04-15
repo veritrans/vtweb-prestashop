@@ -124,9 +124,9 @@ class VeritransPay extends PaymentModule
 	{
 		if (Tools::isSubmit('btnSubmit'))
 		{
-			if (!Tools::getValue('veritrans_merchant_hash'))
+			if (!Tools::getValue('VERITRANS_MERCHANT_HASH'))
 				$this->_postErrors[] = $this->l('Merchant Hash are required.');
-			else if (!Tools::getValue('veritrans_merchant_id'))
+			else if (!Tools::getValue('VERITRANS_MERCHANT_ID'))
 				$this->_postErrors[] = $this->l('Merchant ID is required.');
 		}
 	}
@@ -136,14 +136,14 @@ class VeritransPay extends PaymentModule
 		if (Tools::isSubmit('btnSubmit'))
 		{
 			foreach ($this->config_keys as $key) {
-				Configuration::updateValue(strtoupper($key), Tools::getValue(str_to_lower($key)));
+				Configuration::updateValue($key, Tools::getValue($key));
 			}	
 			// Configuration::updateValue('VERITRANS_MERCHANT_ID', Tools::getValue('veritrans_merchant_id'));
 			// Configuration::updateValue('VERITRANS_MERCHANT_HASH', Tools::getValue('veritrans_merchant_hash'));
 			// Configuration::updateValue('VERITRANS_KURS', Tools::getValue('veritrans_kurs'));
 			// Configuration::updateValue('VERITRANS_CONVENIENCE_FEE', Tools::getValue('veritrans_convenience_fee'));
 		}
-		$this->_html .= '<div class="conf confirm"> '.$this->l('Settings updated').'</div>';
+		$this->_html .= '<div class="alert alert-success conf confirm"> '.$this->l('Settings updated').'</div>';
 	}
 
 	private function _displayVeritransPay()
@@ -465,7 +465,7 @@ class VeritransPay extends PaymentModule
 				$this->_postProcess();
 			else
 				foreach ($this->_postErrors as $err)
-					$this->_html .= '<div class="alert error">'.$err.'</div>';
+					$this->_html .= '<div class="alert alert-danger error">'. $err . '</div>';
 		}
 		else
 			$this->_html .= '<br />';
