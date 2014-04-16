@@ -95,12 +95,23 @@ class VeritransPay extends PaymentModule
 
 	public function install()
 	{
+		// create a new order state for Veritrans, since Prestashop won't assign order ID unless it is validated,
+		// and no default order states matches the state we want. Assigning order_id with uniqid() will confuse
+		// users in the future
+		$order_state = new OrderStateCore();
+		$order_state->name = array((int)Configuration::get('PS_LANG_DEFAULT') => 'Awaiting Veritrans payment');;
+		$order_state->module_name = 'veritranspay';
+		$order_state->unremovable = false;
+		$order_state->add();
+
+		Configuration::updateValue('VERITRANS_ORDER_STATE_ID', $order_state->id);
+
 		if (!parent::install() || 
 			!$this->registerHook('payment') ||
 			!$this->registerHook('header') ||
 			!$this->registerHook('displayBackOfficeHeader'))
 			return false;
-
+		
 		include_once(_PS_MODULE_DIR_ . '/' . $this->name . '/vtpay_install.php');
 		$vtpay_install = new VeritransPayInstall();
 		$vtpay_install->createTable();
@@ -111,6 +122,14 @@ class VeritransPay extends PaymentModule
 	public function uninstall()
 	{
 		$status = true;
+
+		$veritrans_payment_waiting_order_state_id = Configuration::get('VERITRANS_ORDER_STATE_ID');
+		if ($veritrans_payment_waiting_order_state_id)
+		{
+			$order_state = new OrderStateCore($veritrans_payment_waiting_order_state_id);
+			$order_state->delete();
+		}
+		
 		// foreach ($this->config_keys as $key) {
 		// 	if (!Configuration::deleteByName($key))
 		// 		$status = false;
@@ -138,10 +157,6 @@ class VeritransPay extends PaymentModule
 			foreach ($this->config_keys as $key) {
 				Configuration::updateValue($key, Tools::getValue($key));
 			}	
-			// Configuration::updateValue('VERITRANS_MERCHANT_ID', Tools::getValue('veritrans_merchant_id'));
-			// Configuration::updateValue('VERITRANS_MERCHANT_HASH', Tools::getValue('veritrans_merchant_hash'));
-			// Configuration::updateValue('VERITRANS_KURS', Tools::getValue('veritrans_kurs'));
-			// Configuration::updateValue('VERITRANS_CONVENIENCE_FEE', Tools::getValue('veritrans_convenience_fee'));
 		}
 		$this->_html .= '<div class="alert alert-success conf confirm"> '.$this->l('Settings updated').'</div>';
 	}
@@ -488,7 +503,7 @@ class VeritransPay extends PaymentModule
 		$this->context->controller->addJS($this->_path . 'js/veritrans_admin.js', 'all');
 	}
 
-	public function hookPayment($params)
+	public function hookDisplayPayment($params)
 	{
 		if (!$this->active)
 			return;

@@ -15,6 +15,7 @@ class VeritransPayPaymentModuleFrontController extends ModuleFrontController
 	{
 		$this->display_column_left = false;
 		$this->display_column_right = false;
+
 		$link = new Link();
 		parent::initContent();
 
@@ -25,12 +26,14 @@ class VeritransPayPaymentModuleFrontController extends ModuleFrontController
 		$usd = Configuration::get('KURS');
 		$cf = Configuration::get('CONVENIENCE_FEE')*0.01;
 		$veritrans = new Veritrans();
-		$url = 'https://vtweb.veritrans.co.id/web1/paymentStart.action';
+		// $url = 'https://vtweb.veritrans.co.id/web1/paymentStart.action';
 
 		$shipping_cost = number_format($cart->getTotalShippingCost(), 0, '', '');
 
-		$veritrans->merchant_id = Configuration::get('MERCHANT_ID');
-		$veritrans->merchant_hash_key = Configuration::get('MERCHANT_HASH');
+		$veritrans->merchant_id = Configuration::get('VERITRANS_MERCHANT_ID');
+		$veritrans->merchant_hash_key = Configuration::get('VERITRANS_MERCHANT_HASH');
+		$veritrans->client_key = Configuration::get('VERITRANS_CLIENT_KEY');
+		$veritrans->server_key = Configuration::get('VERITRANS_SERVER_KEY');
 				
 		$customer = new Customer($cart->id_customer);
 		
@@ -48,12 +51,12 @@ class VeritransPayPaymentModuleFrontController extends ModuleFrontController
 		$veritrans->order_id = uniqid();
 		$veritrans->session_id = session_id();
 				
-		$veritrans->finish_payment_return_url = $link->getModuleLink('veritranspay', 'validation');
-		$veritrans->unfinish_payment_return_url = $link->getPageLink('order');
-		$veritrans->error_payment_return_url = $link->getModuleLink('veritranspay', 'error');
+		// $veritrans->finish_payment_return_url = $link->getModuleLink('veritranspay', 'validation');
+		// $veritrans->unfinish_payment_return_url = $link->getPageLink('order');
+		// $veritrans->error_payment_return_url = $link->getModuleLink('veritranspay', 'error');
 		
 		$gross_1 = $usd * number_format($cart->getOrderTotal(true, Cart::BOTH), 0, '', '');
-		$convenience_fee= number_format($cf * $gross_1, 0, '', '');
+		$convenience_fee = number_format($cf * $gross_1, 0, '', '');
 		
 		if($convenience_fee!=0){
 			$veritrans->gross_amount = ($gross_1 + $convenience_fee);
