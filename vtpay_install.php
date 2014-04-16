@@ -32,4 +32,5 @@ class VeritransPayInstall
 		) ENGINE='._MYSQL_ENGINE_.' DEFAULT CHARSET=utf8 AUTO_INCREMENT=1'))
 			return false;
 	}
+
 }

@@ -1,6 +1,5 @@
 <?php
 
-require_once 'library/veritrans.php';
 require_once 'library/veritrans_notification.php';
 
 class VeritransPayValidationModuleFrontController extends ModuleFrontController
@@ -10,25 +9,27 @@ class VeritransPayValidationModuleFrontController extends ModuleFrontController
 	 */
 	public function postProcess()
 	{	
-		$cart = $this->context->cart;
-		var_dump($cart);
+		// we don't use shopping cart again
+		// $cart = $this->context->cart;
+		// var_dump($cart);
 
 		$veritrans_notification = new VeritransNotification();
 		$transaction = $this->getTransaction($veritrans_notification->orderId);
+		$order_id = $veritrans_notification->orderId;
 
 		$token_merchant = $transaction['token_merchant'];
-		$customer = new Customer($transaction['id_customer']); 
-		var_dump($transaction);
-		var_dump($customer);
+		// $customer = new Customer($transaction['id_customer']); 
+		// error_log($transaction);
+		// error_log($customer);
 
-		$cart = new Cart($transaction['id_cart']); 
-		var_dump($cart);
+		// $cart = new Cart($transaction['id_cart']); 
+		// var_dump($cart);
 		
-		$currency = new Currency($transaction['id_currency']); 
-		var_dump($currency);
+		// $currency = new Currency($transaction['id_currency']); 
+		// var_dump($currency);
 
-		$total = (float)$cart->getOrderTotal(true, Cart::BOTH); 
-		var_dump($total);
+		// $total = (float)$cart->getOrderTotal(true, Cart::BOTH); 
+		// var_dump($total);
 		
 		$mailVars = array(
 			'{merchant_id}' => Configuration::get('MERCHANT_ID'),
@@ -37,29 +38,38 @@ class VeritransPayValidationModuleFrontController extends ModuleFrontController
 
 		
 		/** Validating order*/
-		if($token_merchant == $veritrans_notification->TOKEN_MERCHANT)
+		if ($veritrans_notification->status != 'fatal')
 		{
-			if ($veritrans_notification->mStatus == 'success')
-			{	
-				$this->module->validateOrder($cart->id, Configuration::get('PS_OS_PAYMENT'), $total, $this->module->displayName, NULL, $mailVars, (int)$currency->id, false, $customer->secure_key);			
-				$status = "Payment Success";
-				$this->validate($this->module->currentOrder, $veritrans_notification->orderId, $status);
-		
-			}
-			elseif ($veritrans_notification->mStatus == 'failure')
+			if($token_merchant == $veritrans_notification->TOKEN_MERCHANT)
 			{
-				$this->module->validateOrder($cart->id, Configuration::get('PS_OS_ERROR'), $total, $this->module->displayName, NULL, $mailVars, (int)$currency->id, false, $customer->secure_key);
-				$status = "Payment Error";
-				$this->validate($this->module->currentOrder, $veritrans_notification->orderId, $status);
+				$history = new OrderHistory();
+				$history->id_order = (int)$veritrans_notification->orderId;	
+				if ($veritrans_notification->mStatus == 'success')
+				{	
+					// $this->module->validateOrder($cart->id, Configuration::get('VERITRANS_PAYMENT_SUCCESS_STATUS_MAPPING'), $total, $this->module->displayName, NULL, $mailVars, (int)$currency->id, false, $customer->secure_key);			
+					$history->changeIdOrderState(Configuration::get('VERITRANS_PAYMENT_SUCCESS_STATUS_MAPPING'), (int)$veritrans_notification->orderId);
+					// $status = "Payment Success";
+					// $this->validate($this->module->currentOrder, $veritrans_notification->orderId, $status);
+					echo 'validation success';
+			
+				}
+				elseif ($veritrans_notification->mStatus == 'failure')
+				{
+					// $this->module->validateOrder($cart->id, Configuration::get('VERITRANS_PAYMENT_FAILURE_STATUS_MAPPING'), $total, $this->module->displayName, NULL, $mailVars, (int)$currency->id, false, $customer->secure_key);
+					$history->changeIdOrderState(Configuration::get('VERITRANS_PAYMENT_SUCCESS_FAILURE_MAPPING'), (int)$veritrans_notification->orderId);
+					// $status = "Payment Error";
+					// $this->validate($this->module->currentOrder, $veritrans_notification->orderId, $status);
+					echo 'validation failed';
+				}
+				else
+				{
+					echo 'other<br/>';
+				}			
 			}
 			else
 			{
-				echo 'other<br/>';
-			}		
-		}
-		else
-		{
-			echo 'no transaction<br/>';
+				echo 'no transaction<br/>';
+			}
 		}
 		exit;
 	}

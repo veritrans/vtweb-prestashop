@@ -26,7 +26,7 @@ class VeritransPayPaymentModuleFrontController extends ModuleFrontController
 		$usd = Configuration::get('KURS');
 		$cf = Configuration::get('CONVENIENCE_FEE') * 0.01;
 		$veritrans = new Veritrans();
-		// $url = 'https://vtweb.veritrans.co.id/web1/paymentStart.action';
+		$url = Veritrans::PAYMENT_REDIRECT_URL;
 
 		// $shipping_cost = number_format($cart->getTotalShippingCost(), 0, '', '');
 		$shipping_cost = $cart->getTotalShippingCost();
@@ -137,7 +137,6 @@ class VeritransPayPaymentModuleFrontController extends ModuleFrontController
 		}
 		$veritrans->items = $items;
 
-		// $this->insertTransaction($cart->id_customer, $cart->id, $currency->id, $veritrans->order_id, $token_merchant);
 		$this->module->validateOrder($cart->id, Configuration::get('VERITRANS_ORDER_STATE_ID'), $cart->getOrderTotal(true, Cart::BOTH), $this->module->displayName, NULL, $mailVars, (int)$currency->id, false, $customer->secure_key);
 		$veritrans->order_id = $this->module->currentOrder;	
 
@@ -149,16 +148,16 @@ class VeritransPayPaymentModuleFrontController extends ModuleFrontController
 			$keys = $veritrans->getTokens();
 			
 			if ($keys)
-			{				
-
+			{	
 				$token_browser = $keys['token_browser'];
 				$token_merchant = $keys['token_merchant'];
-				
+				$error_message = '';
+				$this->insertTransaction($cart->id_customer, $cart->id, $currency->id, $veritrans->order_id, $token_merchant);
 				$success = true;
 
 			} else
 			{
-
+				$error_message = $veritrans->errors;
 			}
 			
 			
