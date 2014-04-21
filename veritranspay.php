@@ -37,25 +37,26 @@ class VeritransPay extends PaymentModule
 		$this->currencies_mode = 'checkbox';
 		$this->veritrans_convenience_fee = 0;
 
+		// key length must be between 0-32 chars to maintain compatibility with <= 1.5
 		$this->config_keys = array(
-			'VERITRANS_MERCHANT_ID', 
-			'VERITRANS_MERCHANT_HASH',
-			'VERITRANS_CLIENT_KEY',
-			'VERITRANS_SERVER_KEY',
-			'VERITRANS_API_VERSION',
-			'VERITRANS_PAYMENT_TYPE',
-			'VERITRANS_3D_SECURE',
-			'VERITRANS_KURS',
-			'VERITRANS_CONVENIENCE_FEE',
-			'VERITRANS_PAYMENT_SUCCESS_STATUS_MAPPING',
-			'VERITRANS_PAYMENT_FAILURE_STATUS_MAPPING',
-			'VERITRANS_PAYMENT_CHALLENGE_STATUS_MAPPING',
-			'VERITRANS_ENVIRONMENT'
+			'VT_MERCHANT_ID', 
+			'VT_MERCHANT_HASH',
+			'VT_CLIENT_KEY',
+			'VT_SERVER_KEY',
+			'VT_API_VERSION',
+			'VT_PAYMENT_TYPE',
+			'VT_3D_SECURE',
+			'VT_KURS',
+			'VT_CONVENIENCE_FEE',
+			'VT_PAYMENT_SUCCESS_STATUS_MAP',
+			'VT_PAYMENT_FAILURE_STATUS_MAP',
+			'VT_PAYMENT_CHALLENGE_STATUS_MAP',
+			'VT_ENVIRONMENT'
 			);
 
 		foreach (array('BNI', 'MANDIRI', 'CIMB') as $bank) {
 			foreach (array(3, 6, 9, 12, 18, 24) as $months) {
-				array_push($this->config_keys, 'VERITRANS_INSTALLMENTS_' . $bank . '_' . $months);
+				array_push($this->config_keys, 'VT_INSTALLMENTS_' . $bank . '_' . $months);
 			}
 		}
 
@@ -66,14 +67,14 @@ class VeritransPay extends PaymentModule
 				$this->{strtolower($key)} = $config[$key];
 		}
 		
-		// if (isset($config['VERITRANS_MERCHANT_HASH']))
-		// 	$this->veritrans_merchant_hash = $config['VERITRANS_MERCHANT_HASH'];
-		// if (isset($config['VERITRANS_KURS']))
-		// 	$this->veritrans_kurs = $config['VERITRANS_KURS'];
-		// else Configuration::set('VERITRANS_KURS',1);
-		// if (isset($config['VERITRANS_CONVENIENCE_FEE']))
-		// 	$this->veritrans_convenience_fee = $config['VERITRANS_CONVENIENCE_FEE'];
-		// else Configuration::set('VERITRANS_CONVENIENCE_FEE',0);
+		// if (isset($config['VT_MERCHANT_HASH']))
+		// 	$this->veritrans_merchant_hash = $config['VT_MERCHANT_HASH'];
+		// if (isset($config['VT_KURS']))
+		// 	$this->veritrans_kurs = $config['VT_KURS'];
+		// else Configuration::set('VT_KURS',1);
+		// if (isset($config['VT_CONVENIENCE_FEE']))
+		// 	$this->veritrans_convenience_fee = $config['VT_CONVENIENCE_FEE'];
+		// else Configuration::set('VT_CONVENIENCE_FEE',0);
 		
 		parent::__construct();
 
@@ -88,8 +89,8 @@ class VeritransPay extends PaymentModule
 			$this->warning = $this->l('No currency has been set for this module.');
 
 		$this->extra_mail_vars = array(
-			'{veritrans_merchant_id}' => Configuration::get('VERITRANS_MERCHANT_ID'),
-			'{veritrans_merchant_hash}' => nl2br(Configuration::get('VERITRANS_MERCHANT_HASH'))
+			'{veritrans_merchant_id}' => Configuration::get('VT_MERCHANT_ID'),
+			'{veritrans_merchant_hash}' => nl2br(Configuration::get('VT_MERCHANT_HASH'))
 			);
 	}
 
@@ -104,7 +105,7 @@ class VeritransPay extends PaymentModule
 		$order_state->unremovable = false;
 		$order_state->add();
 
-		Configuration::updateValue('VERITRANS_ORDER_STATE_ID', $order_state->id);
+		Configuration::updateValue('VT_ORDER_STATE_ID', $order_state->id);
 
 		if (!parent::install() || 
 			!$this->registerHook('payment') ||
@@ -123,7 +124,7 @@ class VeritransPay extends PaymentModule
 	{
 		$status = true;
 
-		$veritrans_payment_waiting_order_state_id = Configuration::get('VERITRANS_ORDER_STATE_ID');
+		$veritrans_payment_waiting_order_state_id = Configuration::get('VT_ORDER_STATE_ID');
 		if ($veritrans_payment_waiting_order_state_id)
 		{
 			$order_state = new OrderStateCore($veritrans_payment_waiting_order_state_id);
@@ -143,9 +144,9 @@ class VeritransPay extends PaymentModule
 	{
 		if (Tools::isSubmit('btnSubmit'))
 		{
-			if (!Tools::getValue('VERITRANS_MERCHANT_HASH'))
+			if (!Tools::getValue('VT_MERCHANT_HASH'))
 				$this->_postErrors[] = $this->l('Merchant Hash are required.');
-			else if (!Tools::getValue('VERITRANS_MERCHANT_ID'))
+			else if (!Tools::getValue('VT_MERCHANT_ID'))
 				$this->_postErrors[] = $this->l('Merchant ID is required.');
 		}
 	}
@@ -218,7 +219,7 @@ class VeritransPay extends PaymentModule
 						'type' => 'select',
 						'label' => 'API Version',
 						'required' => true,
-						'name' => 'VERITRANS_API_VERSION',
+						'name' => 'VT_API_VERSION',
 						'is_bool' => false,
 						'options' => array(
 							'query' => array(
@@ -239,7 +240,7 @@ class VeritransPay extends PaymentModule
 					array(
 						'type' => 'select',
 						'label' => 'Environment',
-						'name' => 'VERITRANS_ENVIRONMENT',
+						'name' => 'VT_ENVIRONMENT',
 						'required' => true,
 						'options' => array(
 							'query' => $environments,
@@ -251,7 +252,7 @@ class VeritransPay extends PaymentModule
 					array(
 						'type' => 'text',
 						'label' => 'Merchant ID',
-						'name' => 'VERITRANS_MERCHANT_ID',
+						'name' => 'VT_MERCHANT_ID',
 						'required' => true,
 						'desc' => 'Consult to your Merchant Administration Portal for the value of this field.',
 						'class' => 'v1_settings vtweb_settings'
@@ -259,7 +260,7 @@ class VeritransPay extends PaymentModule
 					array(
 						'type' => 'text',
 						'label' => 'Merchant Hash Key',
-						'name' => 'VERITRANS_MERCHANT_HASH',
+						'name' => 'VT_MERCHANT_HASH',
 						'required' => true,
 						'desc' => 'Consult to your Merchant Administration Portal for the value of this field.',
 						'class' => 'v1_settings vtweb_settings'
@@ -267,7 +268,7 @@ class VeritransPay extends PaymentModule
 					array(
 						'type' => 'text',
 						'label' => 'VT-Direct Client Key',
-						'name' => 'VERITRANS_CLIENT_KEY',
+						'name' => 'VT_CLIENT_KEY',
 						'required' => true,
 						'desc' => 'Consult to your Merchant Administration Portal for the value of this field.',
 						'class' => 'vtdirect_settings'
@@ -275,7 +276,7 @@ class VeritransPay extends PaymentModule
 					array(
 						'type' => 'text',
 						'label' => 'VT-Direct Server Key',
-						'name' => 'VERITRANS_SERVER_KEY',
+						'name' => 'VT_SERVER_KEY',
 						'required' => true,
 						'desc' => 'Consult to your Merchant Administration Portal for the value of this field.',
 						'class' => 'vtdirect_settings'
@@ -283,7 +284,7 @@ class VeritransPay extends PaymentModule
 					array(
 						'type' => 'select',
 						'label' => 'Payment Type',
-						'name' => 'VERITRANS_PAYMENT_TYPE',
+						'name' => 'VT_PAYMENT_TYPE',
 						'required' => true,
 						'is_bool' => false,
 						'options' => array(
@@ -305,7 +306,7 @@ class VeritransPay extends PaymentModule
 					array(
 						'type' => 'checkbox',
 						'label' => 'Enable BNI Installments?',
-						'name' => 'VERITRANS_INSTALLMENTS',
+						'name' => 'VT_INSTALLMENTS',
 						'values' => array(
 							'query' => $installments_options['BNI'],
 							'id' => 'id_option',
@@ -316,7 +317,7 @@ class VeritransPay extends PaymentModule
 					array(
 						'type' => 'checkbox',
 						'label' => 'Enable Mandiri Installments?',
-						'name' => 'VERITRANS_INSTALLMENTS',
+						'name' => 'VT_INSTALLMENTS',
 						'values' => array(
 							'query' => $installments_options['MANDIRI'],
 							'id' => 'id_option',
@@ -327,7 +328,7 @@ class VeritransPay extends PaymentModule
 					array(
 						'type' => 'checkbox',
 						'label' => 'Enable CIMB Installments?',
-						'name' => 'VERITRANS_INSTALLMENTS',
+						'name' => 'VT_INSTALLMENTS',
 						'values' => array(
 							'query' => $installments_options['CIMB'],
 							'id' => 'id_option',
@@ -338,7 +339,7 @@ class VeritransPay extends PaymentModule
 					array(
 						'type' => 'radio',
 						'label' => 'Enable 3D Secure?',
-						'name' => 'VERITRANS_3D_SECURE',
+						'name' => 'VT_3D_SECURE',
 						'required' => true,
 						'is_bool' => true,
 						'values' => array(
@@ -358,7 +359,7 @@ class VeritransPay extends PaymentModule
 					array(
 						'type' => 'select',
 						'label' => 'Map payment SUCCESS status to:',
-						'name' => 'VERITRANS_PAYMENT_SUCCESS_STATUS_MAPPING',
+						'name' => 'VT_PAYMENT_SUCCESS_STATUS_MAP',
 						'required' => true,	
 						'options' => array(
 							'query' => $order_states,
@@ -370,7 +371,7 @@ class VeritransPay extends PaymentModule
 					array(
 						'type' => 'select',
 						'label' => 'Map payment FAILURE status to:',
-						'name' => 'VERITRANS_PAYMENT_FAILURE_STATUS_MAPPING',
+						'name' => 'VT_PAYMENT_FAILURE_STATUS_MAP',
 						'required' => true,
 						'options' => array(
 							'query' => $order_states,
@@ -382,7 +383,7 @@ class VeritransPay extends PaymentModule
 					array(
 						'type' => 'select',
 						'label' => 'Map payment CHALLENGE status to:',
-						'name' => 'VERITRANS_PAYMENT_CHALLENGE_STATUS_MAPPING',
+						'name' => 'VT_PAYMENT_CHALLENGE_STATUS_MAP',
 						'required' => true,
 						'options' => array(
 							'query' => $order_states,
@@ -394,7 +395,7 @@ class VeritransPay extends PaymentModule
 					array(
 						'type' => 'text',
 						'label' => 'IDR Conversion Rate',
-						'name' => 'VERITRANS_KURS',
+						'name' => 'VT_KURS',
 						'desc' => 'Veritrans will use this rate to convert prices to IDR when there are no default conversion system.'
 						),
 					),
@@ -433,7 +434,7 @@ class VeritransPay extends PaymentModule
 		}
 		return $result;
 		// return array(
-		// 	'VERITRANS_MERCHANT_ID' => Tools::getValue('VERITRANS_MERCHANT_ID', Configuration::get('VERITRANS_MERCHANT_ID'))
+		// 	'VT_MERCHANT_ID' => Tools::getValue('VT_MERCHANT_ID', Configuration::get('VT_MERCHANT_ID'))
 		// );
 	}
 
@@ -515,7 +516,7 @@ class VeritransPay extends PaymentModule
 		$cart = $this->context->cart;
 
 		$this->smarty->assign(array(
-			'payment_type' => Configuration::get('VERITRANS_PAYMENT_TYPE'),
+			'payment_type' => Configuration::get('VT_PAYMENT_TYPE'),
 			'cart' => $cart,
 			'this_path' => $this->_path,
 			'this_path_ssl' => Tools::getShopDomainSsl(true, true).__PS_BASE_URI__.'modules/'.$this->name.'/'

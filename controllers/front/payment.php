@@ -69,14 +69,14 @@ class VeritransPayPaymentModuleFrontController extends ModuleFrontController
 		// // require_once 'library/isocountry.php';
 		// // $iso_A3 = new ISOCountry;
 
-		// $veritrans->version = Configuration::get('VERITRANS_API_VERSION');
-		// $veritrans->environment = Configuration::get('VERITRANS_ENVIRONMENT');
-		// $veritrans->payment_type = Configuration::get('VERITRANS_PAYMENT_TYPE') == 'vtdirect' ? Veritrans::VT_DIRECT : Veritrans::VT_WEB;
-		// $veritrans->merchant_id = Configuration::get('VERITRANS_MERCHANT_ID');
-		// $veritrans->merchant_hash_key = Configuration::get('VERITRANS_MERCHANT_HASH');
-		// $veritrans->client_key = Configuration::get('VERITRANS_CLIENT_KEY');
-		// $veritrans->server_key = Configuration::get('VERITRANS_SERVER_KEY');
-		// $veritrans->enable_3d_secure = Configuration::get('VERITRANS_3D_SECURE');
+		// $veritrans->version = Configuration::get('VT_API_VERSION');
+		// $veritrans->environment = Configuration::get('VT_ENVIRONMENT');
+		// $veritrans->payment_type = Configuration::get('VT_PAYMENT_TYPE') == 'vtdirect' ? Veritrans::VT_DIRECT : Veritrans::VT_WEB;
+		// $veritrans->merchant_id = Configuration::get('VT_MERCHANT_ID');
+		// $veritrans->merchant_hash_key = Configuration::get('VT_MERCHANT_HASH');
+		// $veritrans->client_key = Configuration::get('VT_CLIENT_KEY');
+		// $veritrans->server_key = Configuration::get('VT_SERVER_KEY');
+		// $veritrans->enable_3d_secure = Configuration::get('VT_3D_SECURE');
 		// $veritrans->force_sanitization = true;
 		
 		// // Billing Address
@@ -132,7 +132,7 @@ class VeritransPayPaymentModuleFrontController extends ModuleFrontController
 		// 	} else
 		// 	{
 		// 		// use rate
-		// 		$conversion_func = function($input) { return $input * intval(Configuration::get('VERITRANS_KURS')); };
+		// 		$conversion_func = function($input) { return $input * intval(Configuration::get('VT_KURS')); };
 		// 	}
 		// 	foreach ($items as &$item) {
 		// 		$item['price'] = intval(round(call_user_func($conversion_func, $item['price'])));
@@ -140,7 +140,7 @@ class VeritransPayPaymentModuleFrontController extends ModuleFrontController
 		// }
 		// $veritrans->items = $items;
 
-		// $this->module->validateOrder($cart->id, Configuration::get('VERITRANS_ORDER_STATE_ID'), $cart->getOrderTotal(true, Cart::BOTH), $this->module->displayName, NULL, $mailVars, (int)$currency->id, false, $customer->secure_key);
+		// $this->module->validateOrder($cart->id, Configuration::get('VT_ORDER_STATE_ID'), $cart->getOrderTotal(true, Cart::BOTH), $this->module->displayName, NULL, $mailVars, (int)$currency->id, false, $customer->secure_key);
 		// $veritrans->order_id = $this->module->currentOrder;	
 
 		// if ($veritrans->version == 1 && $veritrans->payment_type == Veritrans::VT_WEB)
