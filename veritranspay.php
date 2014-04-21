@@ -495,9 +495,10 @@ class VeritransPay extends PaymentModule
 	{
 		// $this->context->controller->addJS($this->_path . 'js/veritrans_admin.js', 'all');
 		// exit;
-		// is this supposed to work in 1.5 and 1.4?
+		// is this supposed to work in 1.4?
 	}
 
+	// working in 1.5 and 1.6
 	public function hookDisplayBackOfficeHeader($params)
 	{
 		$this->context->controller->addJS($this->_path . 'js/veritrans_admin.js', 'all');
@@ -507,12 +508,14 @@ class VeritransPay extends PaymentModule
 	{
 		if (!$this->active)
 			return;
+
 		if (!$this->checkCurrency($params['cart']))
 			return;
 
 		$cart = $this->context->cart;
 
 		$this->smarty->assign(array(
+			'payment_type' => Configuration::get('VERITRANS_PAYMENT_TYPE'),
 			'cart' => $cart,
 			'this_path' => $this->_path,
 			'this_path_ssl' => Tools::getShopDomainSsl(true, true).__PS_BASE_URI__.'modules/'.$this->name.'/'

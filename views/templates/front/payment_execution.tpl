@@ -1,7 +1,6 @@
-{capture name=path}{l s='Veritrans payment.' mod='veritranspay'}{/capture}
-{include file="$tpl_dir./breadcrumb.tpl"}
+{capture name=path}{l s='Veritrans Payment' mod='veritranspay'}{/capture}
 
-<h2>{l s='Order summary' mod='veritranspay'}</h2>
+<h1 class="page-heading">{l s='Order summary' mod='veritranspay'}</h1>
 
 {assign var='current_step' value='payment'}
 {include file="$tpl_dir./order-steps.tpl"}
