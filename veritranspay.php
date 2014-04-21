@@ -505,6 +505,11 @@ class VeritransPay extends PaymentModule
 		$this->context->controller->addJS($this->_path . 'js/veritrans_admin.js', 'all');
 	}
 
+	public function hookPayment($params)
+	{
+		$this->hookDisplayPayment($params);
+	}
+
 	public function hookDisplayPayment($params)
 	{
 		if (!$this->active)

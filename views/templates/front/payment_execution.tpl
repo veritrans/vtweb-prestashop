@@ -1,20 +1,22 @@
 {capture name=path}{l s='Veritrans Payment' mod='veritranspay'}{/capture}
+{* {include file="$tpl_dir./breadcrumb.tpl"} *}
 
-<h1 class="page-heading">{l s='Order summary' mod='veritranspay'}</h1>
+<h2>{l s='Order summary' mod='veritranspay'}</h2>
 
 {assign var='current_step' value='payment'}
 {include file="$tpl_dir./order-steps.tpl"}
 
+<div class="box cheque-box">
 {if $nbProducts <= 0}
 	<p class="warning">{l s='Your shopping cart is empty.' mod='veritranspay'}</p>
 {elseif $error_message != ""}
 	<p class="warning">{$error_message}</p><br/>
 {else}
-	<h3>{l s='Payment via Veritrans.' mod='veritranspay'}</h3>
+	<h3 class="page-subheading">{l s='Payment via Veritrans.' mod='veritranspay'}</h3>
 	<form action="{$url}" method="post" name="payment_form">
 	{* <form action="{$link->getModuleLink('veritranspay', 'validation', [], true)}" method="post">  *}
 	<p>
-		<img src="{$this_path}veritrans.jpg" alt="{l s='Veritrans' mod='veritranspay'}" width="86" height="49" style="float:left; margin: 0px 10px 5px 0px;" />
+		<img src="{$this_path}veritrans.jpg" alt="{l s='Veritrans' mod='veritranspay'}" height="49" style="float:left; margin: 0px 10px 5px 0px;" />
 		<br/><b>{l s='You have chosen to pay via Veritrans.' mod='veritranspay'}</b><br/>
 	</p>
 	<p style="margin-top:20px;">
@@ -43,7 +45,7 @@
 		{l s='Please confirm your order by clicking "Place my order".' mod='veritranspay'}
 	</b></p>
 
-	<p class="cart_navigation">
+	<p class="cart_navigation clearfix" id="cart_navigation">
 		<input type="hidden" size="30" name="MERCHANT_ID" value="{$merchant_id}" /><br/>
 		<input type="hidden" name="ORDER_ID" value="{$order_id}" /><br/>
 		<input type="hidden" size="70" name="TOKEN_BROWSER" value="{$token_browser}" /><br/>
@@ -53,3 +55,4 @@
 	</p>
 	</form>
 {/if}
+</div>
