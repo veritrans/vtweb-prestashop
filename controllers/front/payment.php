@@ -143,7 +143,8 @@ class VeritransPayPaymentModuleFrontController extends ModuleFrontController
     // }
     
     $this->context->smarty->assign(array(
-      'payment_type' => Configuration::get('VERITRANS_PAYMENT_TYPE'),
+      'payment_type' => Configuration::get('VT_PAYMENT_TYPE'),
+      'api_version' => Configuration::get('VT_API_VERSION'),
     //  'cart' => $cart,
     //  'shipping' => $shipping_cost,
     //  'session_id' => $veritrans->session_id,
