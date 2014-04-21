@@ -177,7 +177,7 @@ class VeritransPayPaymentModuleFrontController extends ModuleFrontController
 
     //  'token_merchant' => $token_merchant,
     //  'token_browser' => $token_browser,
-     'error_message' => '',
+      'error_message' => '',
 
     	'nbProducts' => $cart->nbProducts(),
       'cust_currency' => $cart->id_currency,
