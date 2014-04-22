@@ -110,7 +110,7 @@ class VeritransPay extends PaymentModule
 		if (!parent::install() || 
 			!$this->registerHook('payment') ||
 			!$this->registerHook('header') ||
-			!$this->registerHook('displayBackOfficeHeader'))
+			!$this->registerHook('backOfficeHeader'))
 			return false;
 		
 		include_once(_PS_MODULE_DIR_ . '/' . $this->name . '/vtpay_install.php');
