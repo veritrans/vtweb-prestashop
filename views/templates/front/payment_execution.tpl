@@ -67,7 +67,7 @@
 			<h3 class="page-subheading">Confirm Order</h3>
 			
 			<p class="cart_navigation clearfix" id="cart_navigation">
-				<input type="submit" name="submit" value="{l s='Place my order' mod='veritranspay'}" class="exclusive_large" />
+				<input type="submit" value="{l s='Place my order' mod='veritranspay'}" class="exclusive_large" />
 				<a href="{$link->getPageLink('order', true, NULL, "step=3")}" class="button_large">{l s='Other payment methods' mod='veritranspay'}
 				</a>
 			</p>

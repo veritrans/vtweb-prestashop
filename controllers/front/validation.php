@@ -1,9 +1,14 @@
 <?php
 
-require_once 'library/veritrans_notification.php';
+require_once 'library/veritrans.php';
 
 class VeritransPayValidationModuleFrontController extends ModuleFrontController
 {
+	public $display_header = false;
+	public $display_footer = false;
+	public $display_column_left = false;
+	public $display_column_right = false;
+
 	/**
 	 * @see FrontController::postProcess()
 	 */
@@ -28,8 +33,8 @@ class VeritransPayValidationModuleFrontController extends ModuleFrontController
     if (!Validate::isLoadedObject($customer))
      Tools::redirect('index.php?controller=order&step=1');
 
-   	$usd = Configuration::get('KURS');
-    $cf = Configuration::get('CONVENIENCE_FEE') * 0.01;
+   	$usd = Configuration::get('VT_KURS');
+    $cf = Configuration::get('VT_CONVENIENCE_FEE') * 0.01;
     $veritrans = new Veritrans();
     $url = Veritrans::PAYMENT_REDIRECT_URL;
 
@@ -45,14 +50,14 @@ class VeritransPayValidationModuleFrontController extends ModuleFrontController
     $billing_address = new Address($cart->id_address_invoice);
     $delivery_address = new Address($cart->id_address_delivery);
 
-    $veritrans->version = Configuration::get('VERITRANS_API_VERSION');
-    $veritrans->environment = Configuration::get('VERITRANS_ENVIRONMENT');
-    $veritrans->payment_type = Configuration::get('VERITRANS_PAYMENT_TYPE') == 'vtdirect' ? Veritrans::VT_DIRECT : Veritrans::VT_WEB;
-    $veritrans->merchant_id = Configuration::get('VERITRANS_MERCHANT_ID');
-    $veritrans->merchant_hash_key = Configuration::get('VERITRANS_MERCHANT_HASH');
-    $veritrans->client_key = Configuration::get('VERITRANS_CLIENT_KEY');
-    $veritrans->server_key = Configuration::get('VERITRANS_SERVER_KEY');
-    $veritrans->enable_3d_secure = Configuration::get('VERITRANS_3D_SECURE');
+    $veritrans->version = Configuration::get('VT_API_VERSION');
+    $veritrans->environment = Configuration::get('VT_ENVIRONMENT');
+    $veritrans->payment_type = Configuration::get('VT_PAYMENT_TYPE') == 'vtdirect' ? Veritrans::VT_DIRECT : Veritrans::VT_WEB;
+    $veritrans->merchant_id = Configuration::get('VT_MERCHANT_ID');
+    $veritrans->merchant_hash_key = Configuration::get('VT_MERCHANT_HASH');
+    $veritrans->client_key = Configuration::get('VT_CLIENT_KEY');
+    $veritrans->server_key = Configuration::get('VT_SERVER_KEY');
+    $veritrans->enable_3d_secure = Configuration::get('VT_3D_SECURE');
     $veritrans->force_sanitization = true;
     
     // Billing Address
@@ -103,7 +108,7 @@ class VeritransPayValidationModuleFrontController extends ModuleFrontController
      } else
      {
        // use rate
-       $conversion_func = function($input) { return $input * intval(Configuration::get('VERITRANS_KURS')); };
+       $conversion_func = function($input) { return $input * intval(Configuration::get('VT_KURS')); };
      }
      foreach ($items as &$item) {
        $item['price'] = intval(round(call_user_func($conversion_func, $item['price'])));
@@ -111,7 +116,7 @@ class VeritransPayValidationModuleFrontController extends ModuleFrontController
     }
     $veritrans->items = $items;
 
-    $this->module->validateOrder($cart->id, Configuration::get('VERITRANS_ORDER_STATE_ID'), $cart->getOrderTotal(true, Cart::BOTH), $this->module->displayName, NULL, $mailVars, (int)$currency->id, false, $customer->secure_key);
+    $this->module->validateOrder($cart->id, Configuration::get('VT_ORDER_STATE_ID'), $cart->getOrderTotal(true, Cart::BOTH), $this->module->displayName, NULL, $mailVars, (int)$currency->id, false, $customer->secure_key);
     $veritrans->order_id = $this->module->currentOrder;  
 
     if ($veritrans->version == 1 && $veritrans->payment_type == Veritrans::VT_WEB)
@@ -126,18 +131,88 @@ class VeritransPayValidationModuleFrontController extends ModuleFrontController
        $error_message = '';
        $this->insertTransaction($cart->id_customer, $cart->id, $currency->id, $veritrans->order_id, $token_merchant);
 
+       $this->context->smarty->assign(array(
+	    	'payment_redirect_url' => Veritrans::PAYMENT_REDIRECT_URL,
+	    	'order_id' => $veritrans->order_id,
+	    	'token_browser' => $token_browser,
+	    	'merchant_id' => $veritrans->merchant_id,
+	    	'this_path' => $this->module->getPathUri(),
+      	'this_path_ssl' => Tools::getShopDomainSsl(true, true).__PS_BASE_URI__.'modules/'.$this->module->name.'/'
+	    	));
+
+       $this->setTemplate('v1_vtweb.tpl');
+
      } else
      {
        $token_browser = '';
        $token_merchant = '';
        $error_message = $veritrans->errors;
-
      }      
       
     } else
     {
      // handle v1's VTDirect, v2's VTWEB, and v2's VTDIRECT here
     }
+	}
+
+	public function setMedia()
+	{
+		Tools::addJs('function onloadEvent() { document.form_auto_post.submit(); }');
+	}
+
+	public function addCommodities($cart, $shipping_cost, $usd)
+	{
+		
+		$products = $cart->getProducts();
+		$commodities = array();
+		$price = 0;
+
+		foreach ($products as $aProduct) {
+			$commodities[] = array(
+				"item_id" => $aProduct['id_product'],
+				// "price" =>  number_format($aProduct['price_wt']*$usd, 0, '', ''),
+				"price" =>  $aProduct['price_wt'],
+				"quantity" => $aProduct['cart_quantity'],
+				"item_name1" => $aProduct['name'],
+				"item_name2" => $aProduct['name']
+			);
+		}
+
+		if($shipping_cost != 0){
+			$commodities[] = array(
+				"item_id" => 'SHIPPING_FEE',
+				// "COMMODITY_PRICE" => $shipping_cost*$usd,
+				"price" => $shipping_cost, // defer currency conversion until the very last time
+				"quantity" => '1',
+				"item_name1" => 'Shipping Cost',
+				"item_name2" => 'Biaya Pengiriman'
+			);			
+		}
+		
+		// convenience fee is disabled for the time being...
+		// if($convenience_fee!=0){
+		// 	$commodities[] = array(
+		// 		"COMMODITY_ID" => '00',
+		// 		"COMMODITY_PRICE" => $convenience_fee,
+		// 		"COMMODITY_QTY" => '1',
+		// 		"COMMODITY_NAME1" => 'Convenience Fee',
+		// 		"COMMODITY_NAME2" => 'Convenience Fee'
+		// 	);
+		// }
+			
+		return $commodities;
+	}
+
+	function insertTransaction($customer_id, $id_cart, $id_currency, $request_id, $token_merchant)
+	{
+		$sql = 'INSERT INTO `'._DB_PREFIX_.'vt_transaction`
+				(`id_customer`, `id_cart`, `id_currency`, `request_id`, `token_merchant`)
+				VALUES ('.(int)$customer_id.',
+					'.(int)$id_cart.',
+					'.(int)$id_currency.',
+						\''.$request_id.'\',
+						\''.$token_merchant.'\')';
+		Db::getInstance()->Execute($sql);
 	}
 
 	// function getTransaction($request_id)
