@@ -6,16 +6,16 @@ session_start();
 
 class VeritransPayPaymentModuleFrontController extends ModuleFrontController
 {
-	public $ssl = true;
-	public $display_column_left = false;
+  public $ssl = true;
+  public $display_column_left = false;
 
-	/**
-	 * @see FrontController::initContent()
-	 */
+  /**
+   * @see FrontController::initContent()
+   */
 
-	public function initContent()
-	{
-		$this->display_column_left = false;
+  public function initContent()
+  {
+    $this->display_column_left = false;
     
     $link = new Link();
     parent::initContent();
@@ -61,7 +61,7 @@ class VeritransPayPaymentModuleFrontController extends ModuleFrontController
     //  'token_browser' => $token_browser,
       'error_message' => '',
 
-    	'nbProducts' => $cart->nbProducts(),
+      'nbProducts' => $cart->nbProducts(),
       'cust_currency' => $cart->id_currency,
       'currencies' => $this->module->getCurrency((int)$cart->id_currency),
       'total' => $cart->getOrderTotal(true, Cart::BOTH),
@@ -69,8 +69,8 @@ class VeritransPayPaymentModuleFrontController extends ModuleFrontController
       'this_path_ssl' => Tools::getShopDomainSsl(true, true).__PS_BASE_URI__.'modules/'.$this->module->name.'/'
     ));
     $this->setTemplate('payment_execution.tpl');
-		
-	}
+    
+  }
 
-	
+  
 }

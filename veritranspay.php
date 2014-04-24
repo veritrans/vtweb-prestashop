@@ -92,6 +92,9 @@ class VeritransPay extends PaymentModule
 			'{veritrans_merchant_id}' => Configuration::get('VT_MERCHANT_ID'),
 			'{veritrans_merchant_hash}' => nl2br(Configuration::get('VT_MERCHANT_HASH'))
 			);
+
+		// Retrocompatibility
+		$this->initContext();
 	}
 
 	public function install()
@@ -175,6 +178,27 @@ class VeritransPay extends PaymentModule
 
 	private function _displayForm()
 	{
+		if (version_compare(Configuration::get('PS_INSTALL_VERSION'), '1.5') == -1) {
+			// retrocompatibility with Prestashop 1.4
+			$this->_displayFormOld();
+		} else
+		{
+			$this->_displayFormNew();
+		}
+		
+	}
+
+	public function getConfigFieldsValues()
+	{
+		$result = array();
+		foreach ($this->config_keys as $key) {
+			$result[$key] = Tools::getValue($key, Configuration::get($key));
+		}
+		return $result;
+	}
+
+	private function _displayFormNew()
+	{
 		$installments_options = array();
 		foreach (array('BNI', 'MANDIRI', 'CIMB') as $bank) {
 			$installments_options[$bank] = array();
@@ -205,8 +229,6 @@ class VeritransPay extends PaymentModule
 				'name' => 'Production'
 				)
 			);
-
-		// var_dump(OrderState::getOrderStates($this->context->language->id));
 
 		$fields_form = array(
 			'form' => array(
@@ -426,48 +448,19 @@ class VeritransPay extends PaymentModule
 		$this->_html .= $helper->generateForm(array($fields_form));
 	}
 
-	public function getConfigFieldsValues()
-	{
-		$result = array();
-		foreach ($this->config_keys as $key) {
-			$result[$key] = Tools::getValue($key, Configuration::get($key));
-		}
-		return $result;
-		// return array(
-		// 	'VT_MERCHANT_ID' => Tools::getValue('VT_MERCHANT_ID', Configuration::get('VT_MERCHANT_ID'))
-		// );
-	}
-
 	private function _displayFormOld()
 	{
-		$this->_html .=
-		'<form action="'.Tools::htmlentitiesUTF8($_SERVER['REQUEST_URI']).'" method="post">
-			<fieldset>
-			<legend><img src="../img/admin/contact.gif" />'.$this->l('Contact details').'</legend>
-				<table border="0" width="500" cellpadding="0" cellspacing="0" id="form">
-					<tr><td colspan="2">'.$this->l('Please specify Merchant ID.').'.<br /><br /></td></tr>
-					<tr>
-						<td width="130" style="vertical-align: top;">'.$this->l('Merchant ID*').'</td>
-						<td><input type="text" name="veritrans_merchant_id" value="'.htmlentities(Tools::getValue('veritrans_merchant_id', $this->veritrans_merchant_id), ENT_COMPAT, 'UTF-8').'" style="width: 300px;" /></td>
-					</tr>
-					<tr>
-						<td width="130" style="vertical-align: top;">'.$this->l('Merchant Hash*').'</td>
-						<td><input type="text" name="veritrans_merchant_hash" value="'.htmlentities(Tools::getValue('veritrans_merchant_hash', $this->veritrans_merchant_hash), ENT_COMPAT, 'UTF-8').'" style="width: 300px;" /></td>
-					</tr>
-					<tr>
-						<td width="130" style="vertical-align: top;">'.$this->l('Kurs').'</td>
-						<td><input type="text" name="veritrans_kurs" value="'.htmlentities(Tools::getValue('veritrans_kurs', $this->veritrans_kurs), ENT_COMPAT, 'UTF-8').'" style="width: 300px;" /></td>
-					</tr>
-					<tr>
-						<td width="130" style="vertical-align: top;">'.$this->l('Convenience Fee (%)').'</td>
-						<td><input type="text" name="veritrans_convenience_fee" value="'.htmlentities(Tools::getValue('veritrans_convenience_fee', $this->veritrans_convenience_fee), ENT_COMPAT, 'UTF-8').'" style="width: 300px;" /></td>
-					</tr>
-
-				</table>
-				<br/>
-				<input class="button" name="btnSubmit" value="'.$this->l('Update settings').'" type="submit" />
-			</fieldset>
-		</form>';
+		$this->context->smarty->assign(array(
+			'form_url' => Tools::htmlentitiesUTF8($_SERVER['REQUEST_URI']),
+			'merchant_id' => htmlentities(Tools::getValue('VT_MERCHANT_ID', $this->veritrans_merchant_id), ENT_COMPAT, 'UTF-8'),
+			'merchant_hash_key' => htmlentities(Tools::getValue('VT_MERCHANT_HASH', $this->veritrans_merchant_hash), ENT_COMPAT, 'UTF-8'),
+			'kurs' => htmlentities(Tools::getValue('VT_KURS', $this->veritrans_kurs), ENT_COMPAT, 'UTF-8'),
+			'convenience_fee' => htmlentities(Tools::getValue('VT_CONVENIENCE_FEE', $this->veritrans_convenience_fee), ENT_COMPAT, 'UTF-8'),
+			'this_path' => $this->_path,
+			'this_path_ssl' => Tools::getShopDomainSsl(true, true).__PS_BASE_URI__.'modules/'.$this->name.'/'
+			));
+		$output = $this->context->smarty->fetch(__DIR__ . '/views/templates/hook/admin_retro.tpl');
+		$this->_html .= $output;
 	}
 
 	public function getContent()
@@ -507,7 +500,12 @@ class VeritransPay extends PaymentModule
 
 	public function hookPayment($params)
 	{
-		$this->hookDisplayPayment($params);
+		if (version_compare(Configuration::get('PS_INSTALL_VERSION'), '1.5') == -1) {
+			return $this->hookDisplayPayment($params);
+		} else
+		{
+			$this->hookDisplayPayment($params);	
+		}		
 	}
 
 	public function hookDisplayPayment($params)
@@ -520,13 +518,21 @@ class VeritransPay extends PaymentModule
 
 		$cart = $this->context->cart;
 
-		$this->smarty->assign(array(
+		$this->context->smarty->assign(array(
 			'payment_type' => Configuration::get('VT_PAYMENT_TYPE'),
 			'cart' => $cart,
 			'this_path' => $this->_path,
 			'this_path_ssl' => Tools::getShopDomainSsl(true, true).__PS_BASE_URI__.'modules/'.$this->name.'/'
 		));
-		return $this->display(__FILE__, 'payment.tpl');
+
+		// 1.4 compatibility
+		if (version_compare(Configuration::get('PS_INSTALL_VERSION'), '1.5') == -1) {
+			$result = $this->display(__FILE__, 'views/templates/hook/payment.tpl');
+		} else
+		{
+			$result = $this->display(__FILE__, 'payment.tpl');	
+		}
+		return $result;
 	}
 	
 	public function checkCurrency($cart)
@@ -539,5 +545,29 @@ class VeritransPay extends PaymentModule
 				if ($currency_order->id == $currency_module['id_currency'])
 					return true;
 		return false;
-	}					
+	}
+
+	// Retrocompatibility 1.4/1.5
+	private function initContext()
+	{
+	  if (class_exists('Context'))
+	    $this->context = Context::getContext();
+	  else
+	  {
+	    global $smarty, $cookie;
+	    $this->context = new StdClass();
+	    $this->context->smarty = $smarty;
+	    $this->context->cookie = $cookie;
+	    if (array_key_exists('cart', $GLOBALS))
+	    {
+	    	global $cart;
+	    	$this->context->cart = $cart;
+	    }
+	    if (array_key_exists('link', $GLOBALS))
+	    {
+	    	global $link;
+	    	$this->context->link = $link;
+	    }
+	  }
+	}			
 }
