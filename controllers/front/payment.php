@@ -2,20 +2,23 @@
 
 require_once 'library/veritrans.php';
 
+$root_dir = str_replace('modules/veritranspay/controllers/front', '', dirname($_SERVER['SCRIPT_FILENAME']));
+include_once($root_dir . '/config/config.inc.php');
+include_once($root_dir . '/init.php');
+
 session_start();
 
+var_dump(_PS_MODE_DEV_);
+var_dump($_SERVER['REQUEST_URI']);
+var_dump(__PS_BASE_URI__);
+
+
 // 1.4 retrocompatibility
-if (!class_exists('ModuleFrontController'))
+if (version_compare(Configuration::get('PS_VERSION_DB'), '1.5.0') == -1)
 {
-  if (is_link(dirname(__FILE__))) {
-    $config_path = readlink(dirname(__FILE__));
-  } else
-  {
-    $config_path = dirname(__FILE__);
-  }
-  require($config_path.'/config/config.inc.php');
-  ControllerFactory::includeController('FrontController');
-  class ModuleFrontControllerCore extends FrontController
+  
+  //ControllerFactory::includeController('FrontController');
+  class ModuleFrontController extends FrontController
   {
     /**
      * @var Module
@@ -67,6 +70,7 @@ if (!class_exists('ModuleFrontController'))
       return false;
     }
   }
+
 }
 
 class VeritransPayPaymentModuleFrontController extends ModuleFrontController
@@ -135,7 +139,13 @@ class VeritransPayPaymentModuleFrontController extends ModuleFrontController
     ));
     $this->setTemplate('payment_execution.tpl');
     
-  }
-
-  
+  }  
 }
+
+
+if (version_compare(Configuration::get('PS_VERSION_DB'), '1.5.0'))
+{
+  // $controller = new VeritransPayPaymentModuleFrontController();
+  // $controller->run();
+}
+
