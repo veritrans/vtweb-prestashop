@@ -16,4 +16,4 @@ elseif (!Customer::getAddressesTotalById((int)($cookie->id_customer)))
 $bankwire = new VeritransPay();
 echo $bankwire->execPayment($cart);
 
-include_once(dirname(__FILE__).'/../../footer.php');
+include_once($root_dir.'/footer.php');
