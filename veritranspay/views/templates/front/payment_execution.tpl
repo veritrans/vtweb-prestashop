@@ -12,8 +12,14 @@
 	{else}
 
 	<h3>{l s='Payment via Veritrans.' mod='veritranspay'}</h3>
-	<form action="{$url}" method="post" name="payment_form">
-	<form action="{$link->getModuleLink('veritranspay', 'validation', [], true)}" method="post"> 
+	kamprettte
+	{if version_compare(Configuration::get('PS_VERSION_DB'), '1.5') === -1}
+		<form action="/haha" method="post"> 
+			asuu
+	{else}
+	kampreet
+		<form action="{$link->getModuleLink('veritranspay', 'validation', [], true)}" method="post"> 
+	{/if}
 	<p>
 		<img src="{$this_path}veritrans.jpg" alt="{l s='Veritrans' mod='veritranspay'}" width="86" height="49" style="float:left; margin: 0px 10px 5px 0px;" />
 		<br/><b>{l s='You have chosen to pay via Veritrans.' mod='veritranspay'}</b><br/>

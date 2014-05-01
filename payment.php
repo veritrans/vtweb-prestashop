@@ -13,7 +13,7 @@ if (!$cookie->isLogged(true))
 elseif (!Customer::getAddressesTotalById((int)($cookie->id_customer)))
   Tools::redirect('address.php?back=order.php?step=1');
 
-$bankwire = new VeritransPay();
-echo $bankwire->execPayment($cart);
+$veritranspay = new VeritransPay();
+echo $veritranspay->execPayment($cart);
 
 include_once($root_dir.'/footer.php');
