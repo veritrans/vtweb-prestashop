@@ -3,6 +3,8 @@
 if (!defined('_PS_VERSION_'))
 	exit;
 
+require_once('library/veritrans.php');
+
 class VeritransPay extends PaymentModule
 {
 	private $_html = '';
@@ -109,6 +111,7 @@ class VeritransPay extends PaymentModule
 		$order_state->add();
 
 		Configuration::updateValue('VT_ORDER_STATE_ID', $order_state->id);
+		Configuration::updateValue('VT_API_VERSION', 1);
 
 		if (!parent::install() || 
 			!$this->registerHook('payment') ||
@@ -178,7 +181,7 @@ class VeritransPay extends PaymentModule
 
 	private function _displayForm()
 	{
-		if (version_compare(Configuration::get('PS_INSTALL_VERSION'), '1.5') == -1) {
+		if (version_compare(Configuration::get('PS_VERSION_DB'), '1.5') == -1) {
 			// retrocompatibility with Prestashop 1.4
 			$this->_displayFormOld();
 		} else
@@ -452,10 +455,10 @@ class VeritransPay extends PaymentModule
 	{
 		$this->context->smarty->assign(array(
 			'form_url' => Tools::htmlentitiesUTF8($_SERVER['REQUEST_URI']),
-			'merchant_id' => htmlentities(Tools::getValue('VT_MERCHANT_ID', $this->veritrans_merchant_id), ENT_COMPAT, 'UTF-8'),
-			'merchant_hash_key' => htmlentities(Tools::getValue('VT_MERCHANT_HASH', $this->veritrans_merchant_hash), ENT_COMPAT, 'UTF-8'),
-			'kurs' => htmlentities(Tools::getValue('VT_KURS', $this->veritrans_kurs), ENT_COMPAT, 'UTF-8'),
-			'convenience_fee' => htmlentities(Tools::getValue('VT_CONVENIENCE_FEE', $this->veritrans_convenience_fee), ENT_COMPAT, 'UTF-8'),
+			'merchant_id' => htmlentities(Configuration::get('VT_MERCHANT_ID'), ENT_COMPAT, 'UTF-8'),
+			'merchant_hash_key' => htmlentities(Configuration::get('VT_MERCHANT_HASH'), ENT_COMPAT, 'UTF-8'),
+			'kurs' => htmlentities(Configuration::get('VT_KURS', $this->veritrans_kurs), ENT_COMPAT, 'UTF-8'),
+			'convenience_fee' => htmlentities(Configuration::get('VT_CONVENIENCE_FEE', $this->veritrans_convenience_fee), ENT_COMPAT, 'UTF-8'),
 			'this_path' => $this->_path,
 			'this_path_ssl' => Tools::getShopDomainSsl(true, true).__PS_BASE_URI__.'modules/'.$this->name.'/'
 			));
@@ -500,7 +503,7 @@ class VeritransPay extends PaymentModule
 
 	public function hookPayment($params)
 	{
-		if (version_compare(Configuration::get('PS_INSTALL_VERSION'), '1.5') == -1) {
+		if (version_compare(Configuration::get('PS_VERSION_DB'), '1.5') == -1) {
 			return $this->hookDisplayPayment($params);
 		} else
 		{
@@ -526,7 +529,7 @@ class VeritransPay extends PaymentModule
 		));
 
 		// 1.4 compatibility
-		if (version_compare(Configuration::get('PS_INSTALL_VERSION'), '1.5') == -1) {
+		if (version_compare(Configuration::get('PS_VERSION_DB'), '1.5') == -1) {
 			$result = $this->display(__FILE__, 'views/templates/hook/payment.tpl');
 		} else
 		{
@@ -579,9 +582,15 @@ class VeritransPay extends PaymentModule
 		if (!$this->checkCurrency($cart))
 			Tools::redirectLink(__PS_BASE_URI__.'order.php');
 
+		$link = new Link();
+
 		global $cookie, $smarty;
 
 		$smarty->assign(array(
+			'payment_type' => Configuration::get('VT_PAYMENT_TYPE'),
+      'api_version' => Configuration::get('VT_API_VERSION'),
+			'error_message' => '',
+			'link' => $link,
 			'nbProducts' => $cart->nbProducts(),
 			'cust_currency' => $cart->id_currency,
 			'currencies' => $this->getCurrency((int)$cart->id_currency),
@@ -590,6 +599,214 @@ class VeritransPay extends PaymentModule
 			'this_path_ssl' => Tools::getShopDomainSsl(true, true).__PS_BASE_URI__.((int)Configuration::get('PS_REWRITING_SETTINGS') && count(Language::getLanguages()) > 1 && isset($smarty->ps_language) && !empty($smarty->ps_language) ? $smarty->ps_language->iso_code.'/' : '').'modules/'.$this->name.'/'
 		));
 
-		return $this->display(__FILE__, 'payment_execution.tpl');
-	}		
+		return $this->display(__FILE__, 'views/templates/front/payment_execution.tpl');
+	}
+
+	// Retrocompatibility 1.4
+	public function execValidation($cart)
+	{
+		global $cookie;
+
+		if ($cart->id_customer == 0 || $cart->id_address_delivery == 0 || $cart->id_address_invoice == 0 || !$this->active)
+			Tools::redirect('index.php?controller=order&step=1');
+
+		// Check that this payment option is still available in case the customer changed his address just before the end of the checkout process
+		$authorized = false;
+		foreach (Module::getPaymentModules() as $module)
+			if ($module['name'] == 'veritranspay')
+			{
+				$authorized = true;
+				break;
+			}
+		if (!$authorized)
+			die($this->module->l('This payment method is not available.', 'validation'));
+
+		$customer = new Customer($cart->id_customer);
+    if (!Validate::isLoadedObject($customer))
+     Tools::redirect('index.php?controller=order&step=1');
+
+   	$usd = Configuration::get('VT_KURS');
+    $cf = Configuration::get('VT_CONVENIENCE_FEE') * 0.01;
+    $veritrans = new Veritrans();
+    $url = Veritrans::PAYMENT_REDIRECT_URL;
+
+    $shipping_cost = $cart->getOrderShippingCost();
+
+    $currency = new Currency($cookie->id_currency);
+    $total = $cart->getOrderTotal(true, Cart::BOTH);
+    $mailVars = array(
+     '{merchant_id}' => Configuration::get('MERCHANT_ID'),
+     '{merchant_hash}' => nl2br(Configuration::get('MERCHANT_HASH'))
+    );
+
+    $billing_address = new Address($cart->id_address_invoice);
+    $delivery_address = new Address($cart->id_address_delivery);
+
+    $veritrans->version = Configuration::get('VT_API_VERSION');
+    $veritrans->environment = Configuration::get('VT_ENVIRONMENT');
+    $veritrans->payment_type = Configuration::get('VT_PAYMENT_TYPE') == 'vtdirect' ? Veritrans::VT_DIRECT : Veritrans::VT_WEB;
+    $veritrans->merchant_id = Configuration::get('VT_MERCHANT_ID');
+    $veritrans->merchant_hash_key = Configuration::get('VT_MERCHANT_HASH');
+    $veritrans->client_key = Configuration::get('VT_CLIENT_KEY');
+    $veritrans->server_key = Configuration::get('VT_SERVER_KEY');
+    $veritrans->enable_3d_secure = Configuration::get('VT_3D_SECURE');
+    $veritrans->force_sanitization = true;
+    
+    // Billing Address
+    $veritrans->first_name = $billing_address->firstname;
+    $veritrans->last_name = $billing_address->lastname;
+    $veritrans->address1 = $billing_address->address1;
+    $veritrans->address2 = $billing_address->address2;
+    $veritrans->city = $billing_address->city;
+    $veritrans->country_code = $billing_address->id_country;
+    $veritrans->postal_code = $billing_address->postcode;
+    $veritrans->phone = $billing_address->phone_mobile;
+    $veritrans->email = $customer->email;
+
+    
+    if($this->context->cart->isVirtualCart()) {
+     $veritrans->required_shipping_address = 0;
+     $veritrans->billing_different_with_shipping = 0;
+    } else {
+     $veritrans->required_shipping_address = 1;
+     if ($cart->id_address_delivery != $cart->id_address_invoice)
+     {
+       $veritrans->billing_different_with_shipping = 1;
+       $veritrans->shipping_first_name = $delivery_address->firstname;
+       $veritrans->shipping_last_name = $delivery_address->lastname;
+       $veritrans->shipping_address1 = $delivery_address->address1;
+       $veritrans->shipping_address2 = $delivery_address->address2;
+       $veritrans->shipping_city = $delivery_address->city;
+       $veritrans->shipping_country_code = $delivery_address->id_country;
+       $veritrans->shipping_postal_code = $delivery_address->postcode;
+       $veritrans->shipping_phone = $delivery_address->phone_mobile;
+     } else
+     {
+       $veritrans->billing_different_with_shipping = 0;
+     }
+    }  
+    
+    $items = $this->addCommodities($cart, $shipping_cost, $usd);
+    
+    // convert the currency
+    $cart_currency = new Currency($cart->id_currency);
+    if ($cart_currency->iso_code != 'IDR')
+    {
+	    // check whether if the IDR is installed or not
+	    if (Currency::exists('IDR', null))
+	    {
+	      // use default rate
+	      $conversion_func = function($input) use($cart_currency) { return Tools::convertPriceFull($input, $cart_currency, new Currency(Currency::getIdByIsoCode('IDR'))); };
+	    } else
+	    {
+	      // use rate
+	      $conversion_func = function($input) { return $input * intval(Configuration::get('VT_KURS')); };
+	    }
+	    foreach ($items as &$item) {
+	      $item['price'] = intval(round(call_user_func($conversion_func, $item['price'])));
+	    }
+    }
+    $veritrans->items = $items;
+
+    $this->validateOrder($cart->id, Configuration::get('VT_ORDER_STATE_ID'), $cart->getOrderTotal(true, Cart::BOTH), $this->displayName, NULL, $mailVars, (int)$currency->id, false, $customer->secure_key);
+    $veritrans->order_id = $this->currentOrder;
+    
+    if ($veritrans->version == 1 && $veritrans->payment_type == Veritrans::VT_WEB)
+    {
+
+     	$keys = $veritrans->getTokens();
+     	var_dump($keys);
+     	var_dump($veritrans->errors);
+     	exit;
+      
+     if ($keys)
+     { 
+       $token_browser = $keys['token_browser'];
+       $token_merchant = $keys['token_merchant'];
+       $error_message = '';
+       $this->insertTransaction($cart->id_customer, $cart->id, $currency->id, $veritrans->order_id, $token_merchant);
+
+       $this->context->smarty->assign(array(
+	    	'payment_redirect_url' => Veritrans::PAYMENT_REDIRECT_URL,
+	    	'order_id' => $veritrans->order_id,
+	    	'token_browser' => $token_browser,
+	    	'merchant_id' => $veritrans->merchant_id,
+	    	'this_path' => $this->module->getPathUri(),
+      	'this_path_ssl' => Tools::getShopDomainSsl(true, true).__PS_BASE_URI__.'modules/'.$this->module->name.'/'
+	    	));
+
+       return $this->display(__FILE__, 'views/templates/front/v1_vtweb.tpl');
+
+     } else
+     {
+       $token_browser = '';
+       $token_merchant = '';
+       $error_message = $veritrans->errors;
+     }      
+      
+    } else
+    {
+     // handle v1's VTDirect, v2's VTWEB, and v2's VTDIRECT here
+    }
+	}
+
+	public function setMedia()
+	{
+		Tools::addJs('function onloadEvent() { document.form_auto_post.submit(); }');
+	}
+
+	public function addCommodities($cart, $shipping_cost, $usd)
+	{
+		
+		$products = $cart->getProducts();
+		$commodities = array();
+		$price = 0;
+
+		foreach ($products as $aProduct) {
+			$commodities[] = array(
+				"item_id" => $aProduct['id_product'],
+				// "price" =>  number_format($aProduct['price_wt']*$usd, 0, '', ''),
+				"price" =>  $aProduct['price_wt'],
+				"quantity" => $aProduct['cart_quantity'],
+				"item_name1" => $aProduct['name'],
+				"item_name2" => $aProduct['name']
+			);
+		}
+
+		if($shipping_cost != 0){
+			$commodities[] = array(
+				"item_id" => 'SHIPPING_FEE',
+				// "COMMODITY_PRICE" => $shipping_cost*$usd,
+				"price" => $shipping_cost, // defer currency conversion until the very last time
+				"quantity" => '1',
+				"item_name1" => 'Shipping Cost',
+				"item_name2" => 'Biaya Pengiriman'
+			);			
+		}
+		
+		// convenience fee is disabled for the time being...
+		// if($convenience_fee!=0){
+		// 	$commodities[] = array(
+		// 		"COMMODITY_ID" => '00',
+		// 		"COMMODITY_PRICE" => $convenience_fee,
+		// 		"COMMODITY_QTY" => '1',
+		// 		"COMMODITY_NAME1" => 'Convenience Fee',
+		// 		"COMMODITY_NAME2" => 'Convenience Fee'
+		// 	);
+		// }
+			
+		return $commodities;
+	}
+
+	function insertTransaction($customer_id, $id_cart, $id_currency, $request_id, $token_merchant)
+	{
+		$sql = 'INSERT INTO `'._DB_PREFIX_.'vt_transaction`
+				(`id_customer`, `id_cart`, `id_currency`, `request_id`, `token_merchant`)
+				VALUES ('.(int)$customer_id.',
+					'.(int)$id_cart.',
+					'.(int)$id_currency.',
+						\''.$request_id.'\',
+						\''.$token_merchant.'\')';
+		Db::getInstance()->Execute($sql);
+	}
 }

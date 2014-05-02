@@ -1,6 +1,6 @@
 <?php
 
-require_once 'library/veritrans.php';
+require_once '../../library/veritrans.php';
 
 class VeritransPayPaymentModuleFrontController extends ModuleFrontController
 {
