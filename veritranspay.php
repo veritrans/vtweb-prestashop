@@ -77,7 +77,11 @@ class VeritransPay extends PaymentModule
 		// if (isset($config['VT_CONVENIENCE_FEE']))
 		// 	$this->veritrans_convenience_fee = $config['VT_CONVENIENCE_FEE'];
 		// else Configuration::set('VT_CONVENIENCE_FEE',0);
-		
+		if (isset($config['VT_API_VERSION']) && in_array($config['VT_API_VERSION'], array(1, 2)))
+			$this->veritrans_api_version = $config['VT_API_VERSION'];
+		else
+			Configuration::set('VT_API_VERSION', 1);
+
 		parent::__construct();
 
 		$this->displayName = $this->l('Veritrans Pay');
@@ -660,11 +664,11 @@ class VeritransPay extends PaymentModule
     $veritrans->city = $billing_address->city;
     $veritrans->country_code = $billing_address->id_country;
     $veritrans->postal_code = $billing_address->postcode;
-    $veritrans->phone = $billing_address->phone_mobile;
+    $veritrans->phone = $this->determineValidPhone($billing_address->phone, $billing_address->phone_mobile);
     $veritrans->email = $customer->email;
 
     
-    if($this->context->cart->isVirtualCart()) {
+    if($cart->isVirtualCart()) {
      $veritrans->required_shipping_address = 0;
      $veritrans->billing_different_with_shipping = 0;
     } else {
@@ -679,7 +683,7 @@ class VeritransPay extends PaymentModule
        $veritrans->shipping_city = $delivery_address->city;
        $veritrans->shipping_country_code = $delivery_address->id_country;
        $veritrans->shipping_postal_code = $delivery_address->postcode;
-       $veritrans->shipping_phone = $delivery_address->phone_mobile;
+       $veritrans->shipping_phone = $this->determineValidPhone($delivery_address->phone, $delivery_address->phone_mobile);
      } else
      {
        $veritrans->billing_different_with_shipping = 0;
@@ -715,13 +719,11 @@ class VeritransPay extends PaymentModule
     {
 
      	$keys = $veritrans->getTokens();
-     	var_dump($keys);
-     	var_dump($veritrans->errors);
-     	exit;
-      
+
      if ($keys)
      { 
-       $token_browser = $keys['token_browser'];
+
+     	 $token_browser = $keys['token_browser'];
        $token_merchant = $keys['token_merchant'];
        $error_message = '';
        $this->insertTransaction($cart->id_customer, $cart->id, $currency->id, $veritrans->order_id, $token_merchant);
@@ -731,11 +733,11 @@ class VeritransPay extends PaymentModule
 	    	'order_id' => $veritrans->order_id,
 	    	'token_browser' => $token_browser,
 	    	'merchant_id' => $veritrans->merchant_id,
-	    	'this_path' => $this->module->getPathUri(),
-      	'this_path_ssl' => Tools::getShopDomainSsl(true, true).__PS_BASE_URI__.'modules/'.$this->module->name.'/'
+	    	'this_path' => $this->_path,
+      	'this_path_ssl' => Tools::getShopDomainSsl(true, true).__PS_BASE_URI__.'modules/'.$this->name.'/'
 	    	));
 
-       return $this->display(__FILE__, 'views/templates/front/v1_vtweb.tpl');
+        return $this->display(__FILE__, 'views/templates/front/v1_vtweb.tpl');
 
      } else
      {
@@ -808,5 +810,23 @@ class VeritransPay extends PaymentModule
 						\''.$request_id.'\',
 						\''.$token_merchant.'\')';
 		Db::getInstance()->Execute($sql);
+	}
+
+	// determine the phone number to make Veritrans happy
+	function determineValidPhone($home_phone = '', $mobile_phone = '')
+	{
+		if (empty($home_phone) && !home_phone($mobile_phone))
+		{
+			return $mobile_phone;
+		} else if (!empty($home_phone) && empty($mobile_phone))
+		{
+			return $home_phone;
+		} else if (!empty($home_phone) && !empty($mobile_phone))
+		{
+			return $mobile_phone;
+		} else
+		{
+			return '081111111111';
+		}
 	}
 }

@@ -20,10 +20,11 @@ After the module is installed, you need to configure the **Merchant ID** and **M
  - Click **"Configure"** option below the Veritrans Pay module.
  - Insert your Merchant ID and Merchant Hash and click **"Update settings"** to save this configuration.
 
+
 Veritrans Prestashop Module
 ===========================
 
-Veritrans :heart: Prestashop! :smile:
+Veritrans :heart: Prestashop!
 
 ## Installation Instruction
 
@@ -33,7 +34,11 @@ Veritrans :heart: Prestashop! :smile:
 
 3. Change the following settings in your MAP:
 
-   * Payment Success URL: `http://[your-site-url]/module/veritranspay/validation`
+   * Payment Success URL: 
+
+     - Prestashop 1.4 and lower: `http://[your-site-url]/modules/veritranspay/notification.php`
+
+     - Prestashop 1.5 and higher: `http://[your-site-url]/module/veritranspay/notification`
 
    * Payment Failure URL: `http://[your-site-url]`
 

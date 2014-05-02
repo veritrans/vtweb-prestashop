@@ -5,7 +5,14 @@ $useSSL = true;
 $root_dir = str_replace('modules/veritranspay', '', dirname($_SERVER['SCRIPT_FILENAME']));
 
 include_once($root_dir.'/config/config.inc.php');
-include_once($root_dir.'/header.php');
+
+$controller = new FrontController();
+
+if (Tools::usingSecureMode())
+  $useSSL = $controller->ssl = true;
+
+$controller->init();
+
 include_once($root_dir.'/modules/veritranspay/veritranspay.php');
 
 if (!$cookie->isLogged(true))
@@ -15,5 +22,3 @@ elseif (!Customer::getAddressesTotalById((int)($cookie->id_customer)))
 
 $veritransPay = new VeritransPay();
 echo $veritransPay->execValidation($cart);
-
-include_once($root_dir.'/footer.php');
