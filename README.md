@@ -19,7 +19,7 @@ After the module is installed, you need to configure the **Merchant ID** and **M
  before using the module.
  - Click **"Configure"** option below the Veritrans Pay module.
  - Insert your Merchant ID and Merchant Hash and click **"Update settings"** to save this configuration.
-=======
+
 Veritrans Prestashop Module
 ===========================
 

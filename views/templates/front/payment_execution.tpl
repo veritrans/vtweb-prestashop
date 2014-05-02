@@ -14,12 +14,11 @@
 	{else}
 		<h3 class="page-subheading">{l s='Payment via Veritrans.' mod='veritranspay'}</h3>
 		{* <form action="{$url}" method="post" name="payment_form" class="std"> *}
-		{if (version_compare(Configuration::get('PS_INSTALL_VERSION'), '1.5') == -1)}
+		{if (version_compare(Configuration::get('PS_VERSION_DB'), '1.5') == -1)}
 			<form action="{$base_dir|cat:'modules/veritranspay/validation.php'}" method="post" class="std"> 
 		{else}
 			<form action="{$link->getModuleLink('veritranspay', 'validation', [], true)}" method="post" class="std"> 
 		{/if}
-			
 			<p>
 				<img src="{$this_path}veritrans.jpg" alt="{l s='Veritrans' mod='veritranspay'}" height="49" style="float:left; margin: 0px 10px 5px 0px;" />
 				<br/><b>{l s='You have chosen to pay via Veritrans.' mod='veritranspay'}</b><br/>
