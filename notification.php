@@ -30,57 +30,61 @@ $veritrans_notification = new VeritransNotification();
 $transaction = getTransaction($veritrans_notification->orderId);
 $order_id = $veritrans_notification->orderId;
 
-$token_merchant = $transaction['token_merchant'];
-// $customer = new Customer($transaction['id_customer']); 
-// error_log($transaction);
-// error_log($customer);
-
-// $cart = new Cart($transaction['id_cart']); 
-// var_dump($cart);
-
-// $currency = new Currency($transaction['id_currency']); 
-// var_dump($currency);
-
-// $total = (float)$cart->getOrderTotal(true, Cart::BOTH); 
-// var_dump($total);
+$customer = new Customer($transaction['id_customer']); 
 
 $mailVars = array(
-  '{merchant_id}' => Configuration::get('MERCHANT_ID'),
-  '{merchant_hash}' => nl2br(Configuration::get('MERCHANT_HASH'))
+  '{merchant_id}' => Configuration::get('VT_MERCHANT_ID'),
+  '{merchant_hash}' => nl2br(Configuration::get('VT_MERCHANT_HASH'))
 );
 
 /** Validating order*/
-if ($veritrans_notification->status != 'fatal')
+if (Configuration::get('VT_API_VERSION') == 2)
 {
-  if($token_merchant == $veritrans_notification->TOKEN_MERCHANT)
+  if ($veritrans_notification->status == 200)
   {
-    $history = new OrderHistory();
-    $history->id_order = (int)$veritrans_notification->orderId; 
-    if ($veritrans_notification->mStatus == 'success')
-    { 
-      // $this->module->validateOrder($cart->id, Configuration::get('VT_PAYMENT_SUCCESS_STATUS_MAP'), $total, $this->module->displayName, NULL, $mailVars, (int)$currency->id, false, $customer->secure_key);     
-      $history->changeIdOrderState(Configuration::get('VT_PAYMENT_SUCCESS_STATUS_MAP'), (int)$veritrans_notification->orderId);
-      // $status = "Payment Success";
-      // $this->validate($this->module->currentOrder, $veritrans_notification->orderId, $status);
-      echo 'validation success';
-  
-    }
-    elseif ($veritrans_notification->mStatus == 'failure')
+    $history->changeIdOrderState(Configuration::get('VT_PAYMENT_SUCCESS_STATUS_MAP'), (int)$veritrans_notification->order_id);
+  } else if ($veritrans_notification->status == 201)
+  {
+    $history->changeIdOrderState(Configuration::get('VT_PAYMENT_CHALLENGE_STATUS_MAP'), (int)$veritrans_notification->order_id);
+  } else
+  {
+    $history->changeIdOrderState(Configuration::get('VT_PAYMENT_FAILURE_STATUS_MAP'), (int)$veritrans_notification->order_id);
+  }
+} else if (Configuration::get('VT_API_VERSION') == 1)
+{
+  $token_merchant = $transaction['token_merchant'];
+  if ($veritrans_notification->status != 'fatal')
+  {
+    if($token_merchant == $veritrans_notification->TOKEN_MERCHANT)
     {
-      // $this->module->validateOrder($cart->id, Configuration::get('VT_PAYMENT_FAILURE_STATUS_MAP'), $total, $this->module->displayName, NULL, $mailVars, (int)$currency->id, false, $customer->secure_key);
-      $history->changeIdOrderState(Configuration::get('VT_PAYMENT_SUCCESS_FAILURE_MAP'), (int)$veritrans_notification->orderId);
-      // $status = "Payment Error";
-      // $this->validate($this->module->currentOrder, $veritrans_notification->orderId, $status);
-      echo 'validation failed';
+      $history = new OrderHistory();
+      $history->id_order = (int)$veritrans_notification->orderId; 
+      if ($veritrans_notification->mStatus == 'success')
+      { 
+        // $this->module->validateOrder($cart->id, Configuration::get('VT_PAYMENT_SUCCESS_STATUS_MAP'), $total, $this->module->displayName, NULL, $mailVars, (int)$currency->id, false, $customer->secure_key);     
+        $history->changeIdOrderState(Configuration::get('VT_PAYMENT_SUCCESS_STATUS_MAP'), (int)$veritrans_notification->orderId);
+        // $status = "Payment Success";
+        // $this->validate($this->module->currentOrder, $veritrans_notification->orderId, $status);
+        echo 'validation success';
+    
+      }
+      elseif ($veritrans_notification->mStatus == 'failure')
+      {
+        // $this->module->validateOrder($cart->id, Configuration::get('VT_PAYMENT_FAILURE_STATUS_MAP'), $total, $this->module->displayName, NULL, $mailVars, (int)$currency->id, false, $customer->secure_key);
+        $history->changeIdOrderState(Configuration::get('VT_PAYMENT_FAILURE_STATUS_MAP'), (int)$veritrans_notification->orderId);
+        // $status = "Payment Error";
+        // $this->validate($this->module->currentOrder, $veritrans_notification->orderId, $status);
+        echo 'validation failed';
+      }
+      else
+      {
+        echo 'other<br/>';
+      }     
     }
     else
     {
-      echo 'other<br/>';
-    }     
-  }
-  else
-  {
-    echo 'no transaction<br/>';
+      echo 'no transaction<br/>';
+    }
   }
 }
 exit;
