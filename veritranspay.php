@@ -184,7 +184,14 @@ class VeritransPay extends PaymentModule
 
 	private function _displayVeritransPay()
 	{
-		$this->_html .= $this->display(__FILE__, 'infos.tpl');
+		if (version_compare(Configuration::get('PS_VERSION_DB'), '1.5') == -1)
+		{
+			$output = $this->context->smarty->fetch(__DIR__ . '/views/templates/hook/infos.tpl');
+			$this->_html .= $output;
+		} else
+		{
+			$this->_html .= $this->display(__FILE__, 'infos.tpl');
+		}
 	}
 
 	private function _displayVeritransPayOld()
