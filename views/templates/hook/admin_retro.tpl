@@ -1,10 +1,10 @@
 <form action="{$form_url}" method="post">
   <fieldset>
   <legend><img src="../img/admin/contact.gif" />Basic Information</legend>
-    <table border="0" width="500" cellpadding="0" cellspacing="0" id="form">
+    <table border="0" id="form">
       
       <tr>
-        <td width="130" style="vertical-align: top;">API Version</td>
+        <td width="300" style="vertical-align: top;">API Version</td>
         <td>
           <select name="VT_API_VERSION" id="veritransApiVersion">
             {foreach from=$api_versions item=version key=k}
@@ -16,7 +16,7 @@
       <!-- API VERSION -->
 
       <tr>
-        <td width="130" style="vertical-align: top;">Payment Type</td>
+        <td width="300" style="vertical-align: top;">Payment Type</td>
         <td>
           <select name="VT_PAYMENT_TYPE" id="veritransPaymentType">
             {foreach from=$payment_types item=v key=k}
@@ -28,31 +28,67 @@
       <!-- PAYMENT_TYPE -->
 
       <tr class="v1_vtweb_settings sensitive">
-        <td width="130" style="vertical-align: top;">Merchant ID</td>
+        <td width="300" style="vertical-align: top;">Merchant ID</td>
         <td><input type="text" name="VT_MERCHANT_ID" value="{$merchant_id}" style="width: 300px;" /></td>
       </tr>
       <!-- MERCHANT_ID -->
 
       <tr class="v1_vtweb_settings sensitive">
-        <td width="130" style="vertical-align: top;">Merchant Hash</td>
+        <td width="300" style="vertical-align: top;">Merchant Hash</td>
         <td><input type="text" name="VT_MERCHANT_HASH" value="{$merchant_hash_key}" style="width: 300px;" /></td>
       </tr>
       <!-- MERCHANT_HASH -->
 
       <tr class="v1_vtdirect_settings v2_settings sensitive">
-        <td width="130" style="vertical-align: top;">Client Key</td>
+        <td width="300" style="vertical-align: top;">Client Key</td>
         <td><input type="text" name="VT_CLIENT_KEY" value="{$client_key}" style="width: 300px;" /></td>
       </tr>
       <!-- CLIENT_KEY -->
 
       <tr class="v1_vtdirect_settings v2_settings sensitive">
-        <td width="130" style="vertical-align: top;">Server Key</td>
+        <td width="300" style="vertical-align: top;">Server Key</td>
         <td><input type="text" name="VT_SERVER_KEY" value="{$server_key}" style="width: 300px;" /></td>
       </tr>
       <!-- SERVER_KEY -->
 
       <tr>
-        <td width="130" style="vertical-align: top;">Kurs</td>
+        <td width="300" style="vertical-align: top;">Map Payment Success to Status:</td>
+        <td>
+          <select name="VT_PAYMENT_SUCCESS_STATUS_MAP">
+            {foreach from=$statuses item=v}
+              <option value="{$v['id_option']}" {if $v['id_option'] == $payment_success_status_map}selected{/if}>{$v['name']}</option>
+            {/foreach}
+          </select>
+        </td>
+      </tr>
+      <!-- PAYMENT_SUCCESS_STATUS_MAP -->
+
+      <tr>
+        <td width="300" style="vertical-align: top;">Map Payment Challenged to Status:</td>
+        <td>
+          <select name="VT_PAYMENT_CHALLENGE_STATUS_MAP">
+            {foreach from=$statuses item=v}
+              <option value="{$v['id_option']}" {if $v['id_option'] == $payment_challenge_status_map}selected{/if}>{$v['name']}</option>
+            {/foreach}
+          </select>
+        </td>
+      </tr>
+      <!-- PAYMENT_CHALLENGE_STATUS_MAP -->
+
+      <tr>
+        <td width="300" style="vertical-align: top;">Map Payment Failure to Status:</td>
+        <td>
+          <select name="VT_PAYMENT_FAILURE_STATUS_MAP">
+            {foreach from=$statuses item=v}
+              <option value="{$v['id_option']}" {if $v['id_option'] == $payment_failure_status_map}selected{/if}>{$v['name']}</option>
+            {/foreach}
+          </select>
+        </td>
+      </tr>
+      <!-- PAYMENT_FAILURE_STATUS_MAP -->
+
+      <tr>
+        <td width="300" style="vertical-align: top;">Kurs</td>
         <td><input type="text" name="VT_KURS" value="{$kurs}" style="width: 300px;" /></td>
       </tr>
       <!-- KURS -->

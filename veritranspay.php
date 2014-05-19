@@ -458,6 +458,14 @@ class VeritransPay extends PaymentModule
 
 	private function _displayFormOld()
 	{
+		$order_states = array();
+		foreach (OrderState::getOrderStates($this->context->language->id) as $state) {
+			array_push($order_states, array(
+				'id_option' => $state['id_order_state'],
+				'name' => $state['name']
+				)
+			);
+		}
 
 		$this->context->smarty->assign(array(
 			'form_url' => Tools::htmlentitiesUTF8($_SERVER['REQUEST_URI']),
@@ -469,6 +477,10 @@ class VeritransPay extends PaymentModule
 			'payment_types' => array('vtweb' => 'VT-Web', 'vtdirect' => 'VT-Direct'),
 			'client_key' => htmlentities(Configuration::get('VT_CLIENT_KEY'), ENT_COMPAT, 'UTF-8'),
 			'server_key' => htmlentities(Configuration::get('VT_SERVER_KEY'), ENT_COMPAT, 'UTF-8'),
+			'statuses' => $order_states,
+			'payment_success_status_map' => htmlentities(Configuration::get('VT_PAYMENT_SUCCESS_STATUS_MAP'), ENT_COMPAT, 'UTF-8'),
+			'payment_challenge_status_map' => htmlentities(Configuration::get('VT_PAYMENT_CHALLENGE_STATUS_MAP'), ENT_COMPAT, 'UTF-8'),
+			'payment_failure_status_map' => htmlentities(Configuration::get('VT_PAYMENT_FAILURE_STATUS_MAP'), ENT_COMPAT, 'UTF-8'),
 			'kurs' => htmlentities(Configuration::get('VT_KURS', $this->veritrans_kurs), ENT_COMPAT, 'UTF-8'),
 			'convenience_fee' => htmlentities(Configuration::get('VT_CONVENIENCE_FEE', $this->veritrans_convenience_fee), ENT_COMPAT, 'UTF-8'),
 			'this_path' => $this->_path,
