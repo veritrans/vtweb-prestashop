@@ -52,6 +52,18 @@
       </tr>
       <!-- SERVER_KEY -->
 
+      <tr class="v1_vtdirect_settings v2_settings">
+        <td width="300" style="vertical-align: top;">Server Key</td>
+        <td>
+          <select name="VT_ENVIRONMENT">
+            {foreach from=$environments item=v key=k}
+              <option value="{$k}" {if $k == $environment}selected{/if}>{$v}</option>
+            {/foreach}
+          </select>
+        </td>
+      </tr>
+      <!-- ENVIRONMENT -->
+
       <tr>
         <td width="300" style="vertical-align: top;">Map Payment Success to Status:</td>
         <td>

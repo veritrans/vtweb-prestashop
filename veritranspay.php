@@ -493,6 +493,8 @@ class VeritransPay extends PaymentModule
 			'payment_types' => array('vtweb' => 'VT-Web', 'vtdirect' => 'VT-Direct'),
 			'client_key' => htmlentities(Configuration::get('VT_CLIENT_KEY'), ENT_COMPAT, 'UTF-8'),
 			'server_key' => htmlentities(Configuration::get('VT_SERVER_KEY'), ENT_COMPAT, 'UTF-8'),
+			'environments' => array(Veritrans::ENVIRONMENT_DEVELOPMENT => 'Development', Veritrans::ENVIRONMENT_PRODUCTION => 'Production'),
+			'environment' => htmlentities(Configuration::get('VT_ENVIRONMENT'), ENT_COMPAT, 'UTF-8'),
 			'statuses' => $order_states,
 			'payment_success_status_map' => htmlentities(Configuration::get('VT_PAYMENT_SUCCESS_STATUS_MAP'), ENT_COMPAT, 'UTF-8'),
 			'payment_challenge_status_map' => htmlentities(Configuration::get('VT_PAYMENT_CHALLENGE_STATUS_MAP'), ENT_COMPAT, 'UTF-8'),
