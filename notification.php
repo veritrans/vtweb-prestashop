@@ -6,6 +6,7 @@ $root_dir = str_replace('modules/veritranspay', '', dirname($_SERVER['SCRIPT_FIL
 
 include_once($root_dir.'/config/config.inc.php');
 require_once 'library/lib/veritrans_notification.php';
+require_once 'library/veritrans.php';
 
 function getTransaction($request_id)
 {
@@ -28,7 +29,6 @@ function validate($id_transaction, $id_order, $order_status)
 
 $veritrans_notification = new VeritransNotification();
 $transaction = getTransaction($veritrans_notification->orderId);
-$order_id = $veritrans_notification->orderId;
 
 $customer = new Customer($transaction['id_customer']); 
 
@@ -37,28 +37,41 @@ $mailVars = array(
   '{merchant_hash}' => nl2br(Configuration::get('VT_MERCHANT_HASH'))
 );
 
+$history = new OrderHistory();
+
 /** Validating order*/
 if (Configuration::get('VT_API_VERSION') == 2)
 {
-  if ($veritrans_notification->status == 200)
+  $history->id_order = (int)$veritrans_notification->order_id;
+
+  // confirm back to Veritrans server
+  $veritrans = new Veritrans();
+  $veritrans->server_key = Configuration::get('VT_SERVER_KEY');
+  $confirmation = $veritrans->confirm($veritrans_notification->order_id);
+  
+  if ($confirmation)
   {
-    $history->changeIdOrderState(Configuration::get('VT_PAYMENT_SUCCESS_STATUS_MAP'), (int)$veritrans_notification->order_id);
-  } else if ($veritrans_notification->status == 201)
-  {
-    $history->changeIdOrderState(Configuration::get('VT_PAYMENT_CHALLENGE_STATUS_MAP'), (int)$veritrans_notification->order_id);
-  } else
-  {
-    $history->changeIdOrderState(Configuration::get('VT_PAYMENT_FAILURE_STATUS_MAP'), (int)$veritrans_notification->order_id);
+    if ($confirmation['status_code'] == 200)
+    {
+      $history->changeIdOrderState(Configuration::get('VT_PAYMENT_SUCCESS_STATUS_MAP'), (int)$confirmation['order_id']);
+    } else if ($confirmation['status_code'] == 201)
+    {
+      $history->changeIdOrderState(Configuration::get('VT_PAYMENT_CHALLENGE_STATUS_MAP'), (int)$confirmation['order_id']);
+    } else
+    {
+      $history->changeIdOrderState(Configuration::get('VT_PAYMENT_FAILURE_STATUS_MAP'), (int)$confirmation['order_id']);
+    }
+    $history->add(true);
   }
+
 } else if (Configuration::get('VT_API_VERSION') == 1)
 {
+  $history->id_order = (int)$veritrans_notification->orderId; 
   $token_merchant = $transaction['token_merchant'];
   if ($veritrans_notification->status != 'fatal')
   {
     if($token_merchant == $veritrans_notification->TOKEN_MERCHANT)
     {
-      $history = new OrderHistory();
-      $history->id_order = (int)$veritrans_notification->orderId; 
       if ($veritrans_notification->mStatus == 'success')
       { 
         // $this->module->validateOrder($cart->id, Configuration::get('VT_PAYMENT_SUCCESS_STATUS_MAP'), $total, $this->module->displayName, NULL, $mailVars, (int)$currency->id, false, $customer->secure_key);     
