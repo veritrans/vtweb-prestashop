@@ -155,10 +155,19 @@ class VeritransPay extends PaymentModule
 	{
 		if (Tools::isSubmit('btnSubmit'))
 		{
-			if (!Tools::getValue('VT_MERCHANT_HASH'))
-				$this->_postErrors[] = $this->l('Merchant Hash are required.');
-			else if (!Tools::getValue('VT_MERCHANT_ID'))
-				$this->_postErrors[] = $this->l('Merchant ID is required.');
+			if (Tools::getValue('VT_API_VERSION') == 2)
+			{
+				if (!Tools::getValue('VT_CLIENT_KEY'))
+					$this->_postErrors[] = $this->l('Client Key is required.');
+				if (!Tools::getValue('VT_SERVER_KEY'))
+					$this->_postErrors[] = $this->l('Server Key is required.');
+			} else
+			{
+				if (!Tools::getValue('VT_MERCHANT_HASH'))
+					$this->_postErrors[] = $this->l('Merchant Hash is required.');
+				if (!Tools::getValue('VT_MERCHANT_ID'))
+					$this->_postErrors[] = $this->l('Merchant ID is required.');
+			}
 		}
 	}
 

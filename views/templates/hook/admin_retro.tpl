@@ -3,7 +3,7 @@
   <legend><img src="../img/admin/contact.gif" />Basic Information</legend>
     <table border="0" id="form">
       
-      <tr>
+      <!-- <tr>
         <td width="300" style="vertical-align: top;">API Version</td>
         <td>
           <select name="VT_API_VERSION" id="veritransApiVersion">
@@ -12,10 +12,11 @@
             {/foreach}
           </select>
         </td>
-      </tr>
+      </tr> -->
+      <input type="hidden" name="VT_API_VERSION" value="2">
       <!-- API VERSION -->
 
-      <tr>
+      <!-- <tr>
         <td width="300" style="vertical-align: top;">Payment Type</td>
         <td>
           <select name="VT_PAYMENT_TYPE" id="veritransPaymentType">
@@ -24,28 +25,28 @@
             {/foreach}
           </select>
         </td>
-      </tr>
+      </tr> -->
       <!-- PAYMENT_TYPE -->
 
-      <tr class="v1_vtweb_settings sensitive">
+      <!-- <tr class="v1_vtweb_settings sensitive">
         <td width="300" style="vertical-align: top;">Merchant ID</td>
         <td><input type="text" name="VT_MERCHANT_ID" value="{$merchant_id}" style="width: 300px;" /></td>
-      </tr>
+      </tr> -->
       <!-- MERCHANT_ID -->
 
-      <tr class="v1_vtweb_settings sensitive">
+      <!-- <tr class="v1_vtweb_settings sensitive">
         <td width="300" style="vertical-align: top;">Merchant Hash</td>
         <td><input type="text" name="VT_MERCHANT_HASH" value="{$merchant_hash_key}" style="width: 300px;" /></td>
-      </tr>
+      </tr> -->
       <!-- MERCHANT_HASH -->
 
-      <tr class="v1_vtdirect_settings v2_settings sensitive">
+      <tr class="v1_vtdirect_settings v2_settings">
         <td width="300" style="vertical-align: top;">Client Key</td>
         <td><input type="text" name="VT_CLIENT_KEY" value="{$client_key}" style="width: 300px;" /></td>
       </tr>
       <!-- CLIENT_KEY -->
 
-      <tr class="v1_vtdirect_settings v2_settings sensitive">
+      <tr class="v1_vtdirect_settings v2_settings">
         <td width="300" style="vertical-align: top;">Server Key</td>
         <td><input type="text" name="VT_SERVER_KEY" value="{$server_key}" style="width: 300px;" /></td>
       </tr>
