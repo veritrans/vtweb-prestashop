@@ -120,7 +120,8 @@ class VeritransPay extends PaymentModule
 		if (!parent::install() || 
 			!$this->registerHook('payment') ||
 			!$this->registerHook('header') ||
-			!$this->registerHook('backOfficeHeader'))
+			!$this->registerHook('backOfficeHeader') ||
+			!$this->registerHook('orderConfirmation'))
 			return false;
 		
 		include_once(_PS_MODULE_DIR_ . '/' . $this->name . '/vtpay_install.php');
@@ -541,12 +542,34 @@ class VeritransPay extends PaymentModule
 
 		// 1.4 compatibility
 		if (version_compare(Configuration::get('PS_VERSION_DB'), '1.5') == -1) {
-			$result = $this->display(__FILE__, 'views/templates/hook/payment.tpl');
+			return $this->display(__FILE__, 'views/templates/hook/payment.tpl');
 		} else
 		{
-			$result = $this->display(__FILE__, 'payment.tpl');	
+			$this->display(__FILE__, 'payment.tpl');	
 		}
-		return $result;
+	}
+
+	public function hookOrderConfirmation($params)
+	{
+		if (!$this->active)
+			return;
+
+		if (!$this->checkCurrency($params['cart']))
+			return;
+
+		$this->context->smarty->assign(array(
+			'cart' => $this->context->cart,
+			'this_path' => $this->_path,
+			'this_path_ssl' => Tools::getShopDomainSsl(true, true).__PS_BASE_URI__.'modules/'.$this->name.'/'
+		));
+
+		// 1.4 compatibility
+		if (version_compare(Configuration::get('PS_VERSION_DB'), '1.5') == -1) {
+			return $this->display(__FILE__, 'views/templates/hook/order_confirmation.tpl');
+		} else
+		{
+			$this->display(__FILE__, 'order_confirmation.tpl');	
+		}
 	}
 	
 	public function checkCurrency($cart)

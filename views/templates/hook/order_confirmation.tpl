@@ -1,0 +1,1 @@
+<p>Your payment is successfully processed.</p>
