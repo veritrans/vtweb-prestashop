@@ -34,14 +34,24 @@ Veritrans :heart: Prestashop!
 
 3. Change the following settings in your MAP:
 
-   * Payment Success URL: 
+   * Payment Notification URL: 
 
      - Prestashop 1.4 and lower: `http://[your-site-url]/modules/veritranspay/notification.php`
 
      - Prestashop 1.5 and higher: `http://[your-site-url]/module/veritranspay/notification`
 
-   * Payment Failure URL: `http://[your-site-url]`
+   * Finish Redirect URL: 
 
-   * Payment Return URL: `http://[your-site-url]`
+     - Prestashop 1.4 and lower: `http://[your-site-url]/modules/veritranspay/success.php`
+
+     - Prestashop 1.5 and higher: `http://[your-site-url]/module/veritranspay/success`
+
+   * Unfinish Redirect URL: `http://[your-site-url]`
+
+   * Error Redirect URL:
+
+     - Prestashop 1.4 and lower: `http://[your-site-url]/modules/veritranspay/failure.php`
+
+     - Prestashop 1.5 and higher: `http://[your-site-url]/modules/veritranspay/failure`
 
 4. Enjoy!

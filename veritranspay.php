@@ -727,35 +727,54 @@ class VeritransPay extends PaymentModule
 
      	$keys = $veritrans->getTokens();
 
-     if ($keys)
-     { 
+      if ($keys)
+      { 
 
-     	 $token_browser = $keys['token_browser'];
-       $token_merchant = $keys['token_merchant'];
-       $error_message = '';
-       $this->insertTransaction($cart->id_customer, $cart->id, $currency->id, $veritrans->order_id, $token_merchant);
+     	  $token_browser = $keys['token_browser'];
+        $token_merchant = $keys['token_merchant'];
+        $error_message = '';
+        $this->insertTransaction($cart->id_customer, $cart->id, $currency->id, $veritrans->order_id, $token_merchant);
 
-       $this->context->smarty->assign(array(
-	    	'payment_redirect_url' => Veritrans::PAYMENT_REDIRECT_URL,
-	    	'order_id' => $veritrans->order_id,
-	    	'token_browser' => $token_browser,
-	    	'merchant_id' => $veritrans->merchant_id,
-	    	'this_path' => $this->_path,
-      	'this_path_ssl' => Tools::getShopDomainSsl(true, true).__PS_BASE_URI__.'modules/'.$this->name.'/'
-	    	));
+        $this->context->smarty->assign(array(
+	    		'payment_redirect_url' => Veritrans::PAYMENT_REDIRECT_URL,
+		    	'order_id' => $veritrans->order_id,
+		    	'token_browser' => $token_browser,
+		    	'merchant_id' => $veritrans->merchant_id,
+		    	'this_path' => $this->_path,
+	      	'this_path_ssl' => Tools::getShopDomainSsl(true, true).__PS_BASE_URI__.'modules/'.$this->name.'/'
+	    		));
 
         return $this->display(__FILE__, 'views/templates/front/v1_vtweb.tpl');
 
      } else
      {
-       $token_browser = '';
-       $token_merchant = '';
-       $error_message = $veritrans->errors;
-     }      
+       	$token_browser = '';
+       	$token_merchant = '';
+       	$error_message = $veritrans->errors;
+     }    
       
-    } else
+    } else if ($veritrans->version == 1 && $veritrans->payment_type == Veritrans::VT_DIRECT)
     {
      // handle v1's VTDirect, v2's VTWEB, and v2's VTDIRECT here
+    } else if ($veritrans->version == 2 && $veritrans->payment_type == Veritrans::VT_WEB)
+    {
+    	$keys = $veritrans->getTokens();
+    	if (!$veritrans->errors)
+    	{
+    		Tools::redirectLink($keys['redirect_url']);
+    	} else
+    	{
+    		var_dump($veritrans->errors);
+    		exit;
+    	}
+    	
+    } else if ($veritrans->version == 2 && $veritrans->payment_type == Veritrans::VT_DIRECT)
+    {
+
+    } else
+    {
+    	echo 'The Veritrans API versions and the payment type is not valid.';
+    	exit;
     }
 	}
 
