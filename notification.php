@@ -5,7 +5,7 @@ $useSSL = true;
 $root_dir = str_replace('modules/veritranspay', '', dirname($_SERVER['SCRIPT_FILENAME']));
 
 include_once($root_dir.'/config/config.inc.php');
-require_once 'library/veritrans_notification.php';
+require_once 'library/lib/veritrans_notification.php';
 
 function getTransaction($request_id)
 {

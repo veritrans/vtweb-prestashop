@@ -457,10 +457,17 @@ class VeritransPay extends PaymentModule
 
 	private function _displayFormOld()
 	{
+
 		$this->context->smarty->assign(array(
 			'form_url' => Tools::htmlentitiesUTF8($_SERVER['REQUEST_URI']),
 			'merchant_id' => htmlentities(Configuration::get('VT_MERCHANT_ID'), ENT_COMPAT, 'UTF-8'),
 			'merchant_hash_key' => htmlentities(Configuration::get('VT_MERCHANT_HASH'), ENT_COMPAT, 'UTF-8'),
+			'api_version' => htmlentities(Configuration::get('VT_API_VERSION'), ENT_COMPAT, 'UTF-8'),
+			'api_versions' => array(1 => 'v1', 2 => 'v2'),
+			'payment_type' => htmlentities(Configuration::get('VT_PAYMENT_TYPE'), ENT_COMPAT, 'UTF-8'),
+			'payment_types' => array('vtweb' => 'VT-Web', 'vtdirect' => 'VT-Direct'),
+			'client_key' => htmlentities(Configuration::get('VT_CLIENT_KEY'), ENT_COMPAT, 'UTF-8'),
+			'server_key' => htmlentities(Configuration::get('VT_SERVER_KEY'), ENT_COMPAT, 'UTF-8'),
 			'kurs' => htmlentities(Configuration::get('VT_KURS', $this->veritrans_kurs), ENT_COMPAT, 'UTF-8'),
 			'convenience_fee' => htmlentities(Configuration::get('VT_CONVENIENCE_FEE', $this->veritrans_convenience_fee), ENT_COMPAT, 'UTF-8'),
 			'this_path' => $this->_path,
