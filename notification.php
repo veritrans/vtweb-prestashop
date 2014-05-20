@@ -51,10 +51,10 @@ if (Configuration::get('VT_API_VERSION') == 2)
   
   if ($confirmation)
   {
-    if ($confirmation['status_code'] == 200)
+    if ($confirmation['transaction_status'] == 'capture')
     {
       $history->changeIdOrderState(Configuration::get('VT_PAYMENT_SUCCESS_STATUS_MAP'), (int)$confirmation['order_id']);
-    } else if ($confirmation['status_code'] == 201)
+    } else if ($confirmation['transaction_status'] == 'challenge')
     {
       $history->changeIdOrderState(Configuration::get('VT_PAYMENT_CHALLENGE_STATUS_MAP'), (int)$confirmation['order_id']);
     } else

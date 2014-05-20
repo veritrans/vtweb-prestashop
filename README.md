@@ -42,16 +42,16 @@ Veritrans :heart: Prestashop!
 
    * Finish Redirect URL: 
 
-     - Prestashop 1.4 and lower: `http://[your-site-url]/modules/veritranspay/success.php`
+     - Prestashop 1.4 and lower: `http://[your-site-url]/modules/veritranspay/order_confirmation.php`
 
-     - Prestashop 1.5 and higher: `http://[your-site-url]/module/veritranspay/success`
+     - Prestashop 1.5 and higher: `http://[your-site-url]/module/veritranspay/order_confirmation`
 
    * Unfinish Redirect URL: `http://[your-site-url]`
 
    * Error Redirect URL:
 
-     - Prestashop 1.4 and lower: `http://[your-site-url]/modules/veritranspay/failure.php`
+     - Prestashop 1.4 and lower: `http://[your-site-url]/modules/veritranspay/order_confirmation.php`
 
-     - Prestashop 1.5 and higher: `http://[your-site-url]/modules/veritranspay/failure`
+     - Prestashop 1.5 and higher: `http://[your-site-url]/modules/veritranspay/order_confirmation`
 
 4. Enjoy!
