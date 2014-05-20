@@ -293,7 +293,7 @@ class VeritransPay extends PaymentModule
 							'id' => 'id_option',
 							'name' => 'name'
 							),
-						'class' => 'v2_settings'
+						'class' => 'v2_settings sensitive'
 						),
 					array(
 						'type' => 'text',
@@ -301,7 +301,7 @@ class VeritransPay extends PaymentModule
 						'name' => 'VT_MERCHANT_ID',
 						'required' => true,
 						'desc' => 'Consult to your Merchant Administration Portal for the value of this field.',
-						'class' => 'v1_settings vtweb_settings'
+						'class' => 'v1_vtweb_settings sensitive'
 						),
 					array(
 						'type' => 'text',
@@ -309,7 +309,7 @@ class VeritransPay extends PaymentModule
 						'name' => 'VT_MERCHANT_HASH',
 						'required' => true,
 						'desc' => 'Consult to your Merchant Administration Portal for the value of this field.',
-						'class' => 'v1_settings vtweb_settings'
+						'class' => 'v1_vtweb_settings sensitive'
 						),
 					array(
 						'type' => 'text',
@@ -317,7 +317,7 @@ class VeritransPay extends PaymentModule
 						'name' => 'VT_CLIENT_KEY',
 						'required' => true,
 						'desc' => 'Consult to your Merchant Administration Portal for the value of this field.',
-						'class' => 'vtdirect_settings'
+						'class' => 'v1_vtdirect_settings v2_settings sensitive'
 						),
 					array(
 						'type' => 'text',
@@ -325,7 +325,7 @@ class VeritransPay extends PaymentModule
 						'name' => 'VT_SERVER_KEY',
 						'required' => true,
 						'desc' => 'Consult to your Merchant Administration Portal for the value of this field.',
-						'class' => 'vtdirect_settings'
+						'class' => 'v1_vtdirect_settings v2_settings sensitive'
 						),
 					array(
 						'type' => 'select',
@@ -358,7 +358,7 @@ class VeritransPay extends PaymentModule
 							'id' => 'id_option',
 							'name' => 'name'
 							),
-						'class' => 'vtweb_settings'
+						'class' => 'v1_vtweb_settings sensitive'
 						),
 					array(
 						'type' => 'checkbox',
@@ -369,7 +369,7 @@ class VeritransPay extends PaymentModule
 							'id' => 'id_option',
 							'name' => 'name'
 							),
-						'class' => 'vtweb_settings'
+						'class' => 'v1_vtweb_settings sensitive'
 						),
 					array(
 						'type' => 'checkbox',
@@ -380,7 +380,7 @@ class VeritransPay extends PaymentModule
 							'id' => 'id_option',
 							'name' => 'name'
 							),
-						'class' => 'vtweb_settings'
+						'class' => 'v1_vtweb_settings sensitive'
 						),
 					array(
 						'type' => 'radio',
@@ -400,7 +400,7 @@ class VeritransPay extends PaymentModule
 								'label' => 'No'
 								)
 							),
-						'class' => 't'
+						'class' => 'v1_settings sensitive'
 						),
 					array(
 						'type' => 'select',
@@ -412,7 +412,7 @@ class VeritransPay extends PaymentModule
 							'id' => 'id_option',
 							'name' => 'name'
 							),
-						'class' => 'vtweb_settings'
+						'class' => ''
 						),
 					array(
 						'type' => 'select',
@@ -424,7 +424,7 @@ class VeritransPay extends PaymentModule
 							'id' => 'id_option',
 							'name' => 'name'
 							),
-						'class' => 'vtweb_settings'
+						'class' => ''
 						),
 					array(
 						'type' => 'select',
@@ -436,7 +436,7 @@ class VeritransPay extends PaymentModule
 							'id' => 'id_option',
 							'name' => 'name'
 							),
-						'class' => 'vtweb_settings'
+						'class' => ''
 						),
 					array(
 						'type' => 'text',
