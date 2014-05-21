@@ -80,7 +80,7 @@ class VeritransPay extends PaymentModule
 		if (isset($config['VT_API_VERSION']) && in_array($config['VT_API_VERSION'], array(1, 2)))
 			$this->veritrans_api_version = $config['VT_API_VERSION'];
 		else
-			Configuration::set('VT_API_VERSION', 1);
+			Configuration::set('VT_API_VERSION', 2);
 
 		parent::__construct();
 
@@ -545,12 +545,7 @@ class VeritransPay extends PaymentModule
 
 	public function hookPayment($params)
 	{
-		if (version_compare(Configuration::get('PS_VERSION_DB'), '1.5') == -1) {
-			return $this->hookDisplayPayment($params);
-		} else
-		{
-			$this->hookDisplayPayment($params);	
-		}		
+		return $this->hookDisplayPayment($params);				
 	}
 
 	public function hookDisplayPayment($params)
@@ -564,7 +559,6 @@ class VeritransPay extends PaymentModule
 		$cart = $this->context->cart;
 
 		$this->context->smarty->assign(array(
-			'payment_type' => Configuration::get('VT_PAYMENT_TYPE'),
 			'cart' => $cart,
 			'this_path' => $this->_path,
 			'this_path_ssl' => Tools::getShopDomainSsl(true, true).__PS_BASE_URI__.'modules/'.$this->name.'/'
@@ -575,7 +569,7 @@ class VeritransPay extends PaymentModule
 			return $this->display(__FILE__, 'views/templates/hook/payment.tpl');
 		} else
 		{
-			$this->display(__FILE__, 'payment.tpl');	
+			return $this->display(__FILE__, 'payment.tpl');	
 		}
 	}
 
@@ -851,7 +845,6 @@ class VeritransPay extends PaymentModule
 		foreach ($products as $aProduct) {
 			$commodities[] = array(
 				"item_id" => $aProduct['id_product'],
-				// "price" =>  number_format($aProduct['price_wt']*$usd, 0, '', ''),
 				"price" =>  $aProduct['price_wt'],
 				"quantity" => $aProduct['cart_quantity'],
 				"item_name1" => $aProduct['name'],
@@ -862,7 +855,6 @@ class VeritransPay extends PaymentModule
 		if($shipping_cost != 0){
 			$commodities[] = array(
 				"item_id" => 'SHIPPING_FEE',
-				// "COMMODITY_PRICE" => $shipping_cost*$usd,
 				"price" => $shipping_cost, // defer currency conversion until the very last time
 				"quantity" => '1',
 				"item_name1" => 'Shipping Cost',
@@ -870,17 +862,6 @@ class VeritransPay extends PaymentModule
 			);			
 		}
 		
-		// convenience fee is disabled for the time being...
-		// if($convenience_fee!=0){
-		// 	$commodities[] = array(
-		// 		"COMMODITY_ID" => '00',
-		// 		"COMMODITY_PRICE" => $convenience_fee,
-		// 		"COMMODITY_QTY" => '1',
-		// 		"COMMODITY_NAME1" => 'Convenience Fee',
-		// 		"COMMODITY_NAME2" => 'Convenience Fee'
-		// 	);
-		// }
-			
 		return $commodities;
 	}
 
