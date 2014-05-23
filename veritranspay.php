@@ -937,7 +937,7 @@ class VeritransPay extends PaymentModule
 		} else if (Configuration::get('VT_API_VERSION') == 1)
 		{
 		  $history->id_order = (int)$veritrans_notification->orderId; 
-		  
+		  $transaction = getTransaction($veritrans_notification->orderId);
 		  $token_merchant = $transaction['token_merchant'];
 		  
 		  if ($veritrans_notification->status != 'fatal')
