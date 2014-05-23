@@ -1,6 +1,6 @@
 <?php 
 
-require_once '../../library/lib/veritrans_notification.php';
+require_once(dirname(__FILE__).'/../../library/lib/veritrans_notification.php');
 
 class VeritransPayNotificationModuleFrontController extends ModuleFrontController
 {

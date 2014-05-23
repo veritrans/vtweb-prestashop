@@ -26,9 +26,6 @@ $keys = $veritransPay->execValidation($cart);
 $veritrans_api_version = Configuration::get('VT_API_VERSION');
 $veritrans_payment_method = Configuration::get('VT_PAYMENT_TYPE');
 
-var_dump($veritrans_api_version);
-var_dump($veritrans_payment_method);
-
 if ($keys['errors'])
 {
 	var_dump($keys['errors']);

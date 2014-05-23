@@ -38,7 +38,7 @@ Veritrans :heart: Prestashop!
 
      - Prestashop 1.4 and lower: `http://[your-site-url]/modules/veritranspay/notification.php`
 
-     - Prestashop 1.5 and higher: `http://[your-site-url]/module/veritranspay/notification`
+     - Prestashop 1.5 and higher: `http://[your-site-url]/index.php?fc=module&module=veritranspay&controller=notification`
 
    * Finish Redirect URL: 
 

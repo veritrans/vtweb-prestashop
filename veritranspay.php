@@ -71,8 +71,10 @@ class VeritransPay extends PaymentModule
 		
 		// if (isset($config['VT_MERCHANT_HASH']))
 		// 	$this->veritrans_merchant_hash = $config['VT_MERCHANT_HASH'];
-		// if (isset($config['VT_KURS']))
-		// 	$this->veritrans_kurs = $config['VT_KURS'];
+		if (isset($config['VT_KURS']))
+			$this->veritrans_kurs = $config['VT_KURS'];
+		else
+			Configuration::set('VT_KURS', 10000);
 		// else Configuration::set('VT_KURS',1);
 		// if (isset($config['VT_CONVENIENCE_FEE']))
 		// 	$this->veritrans_convenience_fee = $config['VT_CONVENIENCE_FEE'];
@@ -807,7 +809,12 @@ class VeritransPay extends PaymentModule
     } else if ($veritrans->version == 2 && $veritrans->payment_type == Veritrans::VT_WEB)
     {
     	$keys = $veritrans->getTokens();
-    	$keys['errors'] = $veritrans->errors;
+    	if (!in_array($keys['status_code'], array(200, 201, 202)))
+    	{
+    		$keys['errors'] = array(
+    			'status_code' => $keys['status_code'],
+    			'status_message' => $keys['status_message']);
+    	}
     	return $keys;
     	
     } else if ($veritrans->version == 2 && $veritrans->payment_type == Veritrans::VT_DIRECT)
