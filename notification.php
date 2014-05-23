@@ -28,6 +28,13 @@ function validate($id_transaction, $id_order, $order_status)
 }
 
 $veritrans_notification = new VeritransNotification();
+if (Configuration::get('VT_API_VERSION') == 1)
+{
+  $transaction = getTransaction($veritrans_notification->orderId);
+} else if (Configuration::get('VT_API_VERSION') == 2)
+{
+  $transaction = getTransaction($veritrans_notification->order_id);
+}
 
 $customer = new Customer($transaction['id_customer']); 
 
