@@ -53,7 +53,7 @@
       <!-- SERVER_KEY -->
 
       <tr class="v1_vtdirect_settings v2_settings">
-        <td width="300" style="vertical-align: top;">Server Key</td>
+        <td width="300" style="vertical-align: top;">Environment</td>
         <td>
           <select name="VT_ENVIRONMENT">
             {foreach from=$environments item=v key=k}
@@ -63,6 +63,9 @@
         </td>
       </tr>
       <!-- ENVIRONMENT -->
+
+      <input type="hidden" name="VT_PAYMENT_TYPE" value="vtweb">
+      <!-- PAYMENT_TYPE -->
 
       <tr>
         <td width="300" style="vertical-align: top;">Map Payment Success to Status:</td>

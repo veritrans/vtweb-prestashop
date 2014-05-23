@@ -111,6 +111,7 @@ class VeritransPay extends PaymentModule
 		$order_state = new OrderStateCore();
 		$order_state->name = array((int)Configuration::get('PS_LANG_DEFAULT') => 'Awaiting Veritrans payment');;
 		$order_state->module_name = 'veritranspay';
+		$order_state->color = '#0000FF';
 		$order_state->unremovable = false;
 		$order_state->add();
 
@@ -167,6 +168,12 @@ class VeritransPay extends PaymentModule
 					$this->_postErrors[] = $this->l('Merchant Hash is required.');
 				if (!Tools::getValue('VT_MERCHANT_ID'))
 					$this->_postErrors[] = $this->l('Merchant ID is required.');
+			}
+
+			// validate conversion rate existence
+			if (!Currency::exists('IDR', null) && !Tools::getValue('VT_KURS'))
+			{
+				$this->_postErrors[] = $this->l('Currency conversion rate must be filled when IDR is not installed in the system.');
 			}
 		}
 	}
@@ -693,7 +700,13 @@ class VeritransPay extends PaymentModule
     $veritrans = new Veritrans();
     $url = Veritrans::PAYMENT_REDIRECT_URL;
 
-    $shipping_cost = $cart->getOrderShippingCost();
+    if (version_compare(Configuration::get('PS_VERSION_DB'), '1.5') == -1)
+    {
+    	$shipping_cost = $cart->getOrderShippingCost();
+    } else
+    {
+    	$shipping_cost = $cart->getTotalShippingCost();
+    }
 
     $currency = new Currency($cookie->id_currency);
     $total = $cart->getOrderTotal(true, Cart::BOTH);
@@ -725,7 +738,6 @@ class VeritransPay extends PaymentModule
     $veritrans->postal_code = $billing_address->postcode;
     $veritrans->phone = $this->determineValidPhone($billing_address->phone, $billing_address->phone_mobile);
     $veritrans->email = $customer->email;
-
     
     if($cart->isVirtualCart()) {
      $veritrans->required_shipping_address = 0;
@@ -773,36 +785,20 @@ class VeritransPay extends PaymentModule
 
     $this->validateOrder($cart->id, Configuration::get('VT_ORDER_STATE_ID'), $cart->getOrderTotal(true, Cart::BOTH), $this->displayName, NULL, $mailVars, (int)$currency->id, false, $customer->secure_key);
     $veritrans->order_id = $this->currentOrder;
-    
+
     if ($veritrans->version == 1 && $veritrans->payment_type == Veritrans::VT_WEB)
     {
-
      	$keys = $veritrans->getTokens();
-
       if ($keys)
-      { 
-
-     	  $token_browser = $keys['token_browser'];
-        $token_merchant = $keys['token_merchant'];
-        $error_message = '';
-        $this->insertTransaction($cart->id_customer, $cart->id, $currency->id, $veritrans->order_id, $token_merchant);
-
-        $this->context->smarty->assign(array(
-	    		'payment_redirect_url' => Veritrans::PAYMENT_REDIRECT_URL,
-		    	'order_id' => $veritrans->order_id,
-		    	'token_browser' => $token_browser,
-		    	'merchant_id' => $veritrans->merchant_id,
-		    	'this_path' => $this->_path,
-	      	'this_path_ssl' => Tools::getShopDomainSsl(true, true).__PS_BASE_URI__.'modules/'.$this->name.'/'
-	    		));
-
-        return $this->display(__FILE__, 'views/templates/front/v1_vtweb.tpl');
-
+      {
+      	$keys['payment_redirect_url'] = Veritrans::PAYMENT_REDIRECT_URL;
+      	$keys['order_id'] = $veritrans->order_id;
+      	$keys['mechant_id'] = $veritrans->merchant_id;
+      	$this->insertTransaction($cart->id_customer, $cart->id, $currency->id, $veritrans->order_id, $keys['token_merchant']);
+      	return $keys;        
      } else
      {
-       	$token_browser = '';
-       	$token_merchant = '';
-       	$error_message = $veritrans->errors;
+       	$keys['errors'] = $veritrans->errors;
      }    
       
     } else if ($veritrans->version == 1 && $veritrans->payment_type == Veritrans::VT_DIRECT)
@@ -811,14 +807,8 @@ class VeritransPay extends PaymentModule
     } else if ($veritrans->version == 2 && $veritrans->payment_type == Veritrans::VT_WEB)
     {
     	$keys = $veritrans->getTokens();
-    	if (!$veritrans->errors)
-    	{
-    		Tools::redirectLink($keys['redirect_url']);
-    	} else
-    	{
-    		var_dump($veritrans->errors);
-    		exit;
-    	}
+    	$keys['errors'] = $veritrans->errors;
+    	return $keys;
     	
     } else if ($veritrans->version == 2 && $veritrans->payment_type == Veritrans::VT_DIRECT)
     {
@@ -880,7 +870,7 @@ class VeritransPay extends PaymentModule
 	// determine the phone number to make Veritrans happy
 	function determineValidPhone($home_phone = '', $mobile_phone = '')
 	{
-		if (empty($home_phone) && !home_phone($mobile_phone))
+		if (empty($home_phone) && !empty($mobile_phone))
 		{
 			return $mobile_phone;
 		} else if (!empty($home_phone) && empty($mobile_phone))
