@@ -28,7 +28,6 @@ function validate($id_transaction, $id_order, $order_status)
 }
 
 $veritrans_notification = new VeritransNotification();
-$transaction = getTransaction($veritrans_notification->orderId);
 
 $customer = new Customer($transaction['id_customer']); 
 

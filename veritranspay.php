@@ -4,6 +4,7 @@ if (!defined('_PS_VERSION_'))
 	exit;
 
 require_once('library/veritrans.php');
+require_once 'library/lib/veritrans_notification.php';
 
 class VeritransPay extends PaymentModule
 {
@@ -890,5 +891,78 @@ class VeritransPay extends PaymentModule
 		{
 			return '081111111111';
 		}
+	}
+
+	public function execNotification()
+	{
+		$mailVars = array(
+		  '{merchant_id}' => Configuration::get('VT_MERCHANT_ID'),
+		  '{merchant_hash}' => nl2br(Configuration::get('VT_MERCHANT_HASH'))
+		);
+
+		$veritrans_notification = new VeritransNotification();
+		$history = new OrderHistory();
+
+		/** Validating order*/
+		if (Configuration::get('VT_API_VERSION') == 2)
+		{
+		  $history->id_order = (int)$veritrans_notification->order_id;
+
+		  // confirm back to Veritrans server
+		  $veritrans = new Veritrans();
+		  $veritrans->server_key = Configuration::get('VT_SERVER_KEY');
+		  $confirmation = $veritrans->confirm($veritrans_notification->order_id);
+		  
+		  if ($confirmation)
+		  {
+		    if ($confirmation['transaction_status'] == 'capture')
+		    {
+		      $history->changeIdOrderState(Configuration::get('VT_PAYMENT_SUCCESS_STATUS_MAP'), (int)$confirmation['order_id']);
+		      echo 'Valid success notification accepted.';
+		    } else if ($confirmation['transaction_status'] == 'challenge')
+		    {
+		      $history->changeIdOrderState(Configuration::get('VT_PAYMENT_CHALLENGE_STATUS_MAP'), (int)$confirmation['order_id']);
+		      echo 'Valid challenge notification accepted.';
+		    } else
+		    {
+		      $history->changeIdOrderState(Configuration::get('VT_PAYMENT_FAILURE_STATUS_MAP'), (int)$confirmation['order_id']);
+		      echo 'Valid failure notification accepted';
+		    }
+		    $history->add(true);
+		  } else
+		  {
+		  	echo 'There is an error contacting the Veritrans server when validating the notification.';
+		  }
+
+		} else if (Configuration::get('VT_API_VERSION') == 1)
+		{
+		  $history->id_order = (int)$veritrans_notification->orderId; 
+		  
+		  $token_merchant = $transaction['token_merchant'];
+		  
+		  if ($veritrans_notification->status != 'fatal')
+		  {
+		    if($token_merchant == $veritrans_notification->TOKEN_MERCHANT)
+		    {
+		      if ($veritrans_notification->mStatus == 'success')
+		      { 
+		        $history->changeIdOrderState(Configuration::get('VT_PAYMENT_SUCCESS_STATUS_MAP'), (int)$veritrans_notification->orderId);
+		      }
+		      elseif ($veritrans_notification->mStatus == 'failure')
+		      {
+		        $history->changeIdOrderState(Configuration::get('VT_PAYMENT_FAILURE_STATUS_MAP'), (int)$veritrans_notification->orderId);
+		      }
+		      else
+		      {
+		        echo 'other<br/>';
+		      }     
+		    }
+		    else
+		    {
+		      echo 'no transaction<br/>';
+		    }
+		  }
+		}
+		exit;
 	}
 }
