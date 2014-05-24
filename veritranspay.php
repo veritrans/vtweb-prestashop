@@ -618,7 +618,7 @@ class VeritransPay extends PaymentModule
 			return $this->display(__FILE__, 'views/templates/hook/order_confirmation.tpl');
 		} else
 		{
-			$this->display(__FILE__, 'order_confirmation.tpl');	
+			return $this->display(__FILE__, 'order_confirmation.tpl');	
 		}
 	}
 	
