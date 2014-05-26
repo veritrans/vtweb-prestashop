@@ -591,28 +591,17 @@ class VeritransPay extends PaymentModule
 		if (!$this->checkCurrency($params['cart']))
 			return;
 
-		if (Configuration::get('VT_API_VERSION') == 2)
-		{
-			$veritrans = new Veritrans();
-			$veritrans->server_key = Configuration::get('VT_SERVER_KEY');
-			$confirmation = $veritrans->confirm(Tools::getValue('id_order'));
+		$order = new Order(Tools::getValue('id_order'));
+		$history = $order->getHistory($this->context->cookie->id_lang);
+		$history = $history[0];
 
-			$this->context->smarty->assign(array(
-				'transaction_status' => $confirmation['transaction_status'],
-				'cart' => $this->context->cart,
-				'this_path' => $this->_path,
-				'this_path_ssl' => Tools::getShopDomainSsl(true, true).__PS_BASE_URI__.'modules/'.$this->name.'/'
-			));
-		} else
-		{
-			$this->context->smarty->assign(array(
-				'transaction_status' => $confirmation['transaction_status'],
-				'cart' => $this->context->cart,
-				'this_path' => $this->_path,
-				'this_path_ssl' => Tools::getShopDomainSsl(true, true).__PS_BASE_URI__.'modules/'.$this->name.'/'
-			));
-		}		
-
+		$this->context->smarty->assign(array(
+			'transaction_status' => $history['id_order_state'],
+			'cart' => $this->context->cart,
+			'this_path' => $this->_path,
+			'this_path_ssl' => Tools::getShopDomainSsl(true, true).__PS_BASE_URI__.'modules/'.$this->name.'/'
+		));
+	
 		// 1.4 compatibility
 		if (version_compare(Configuration::get('PS_VERSION_DB'), '1.5') == -1) {
 			return $this->display(__FILE__, 'views/templates/hook/order_confirmation.tpl');
