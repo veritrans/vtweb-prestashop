@@ -807,13 +807,15 @@ class VeritransPay extends PaymentModule
       {
       	$keys['payment_redirect_url'] = Veritrans::PAYMENT_REDIRECT_URL;
       	$keys['order_id'] = $veritrans->order_id;
-      	$keys['mechant_id'] = $veritrans->merchant_id;
-      	$this->insertTransaction($cart->id_customer, $cart->id, $currency->id, $veritrans->order_id, $keys['token_merchant']);
-      	return $keys;        
+      	$keys['merchant_id'] = $veritrans->merchant_id;
+      	$keys['errors'] = NULL;
+      	$this->insertTransaction($cart->id_customer, $cart->id, $currency->id, $veritrans->order_id, $keys['token_merchant']);        
      } else
      {
        	$keys['errors'] = $veritrans->errors;
-     }    
+     }
+
+     return $keys;
       
     } else if ($veritrans->version == 1 && $veritrans->payment_type == Veritrans::VT_DIRECT)
     {
@@ -826,6 +828,9 @@ class VeritransPay extends PaymentModule
     		$keys['errors'] = array(
     			'status_code' => $keys['status_code'],
     			'status_message' => $keys['status_message']);
+    	} else
+    	{
+    		$keys['errors'] = NULL;
     	}
     	return $keys;
     	
