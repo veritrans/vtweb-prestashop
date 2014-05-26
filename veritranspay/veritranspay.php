@@ -891,6 +891,15 @@ class VeritransPay extends PaymentModule
 		Db::getInstance()->Execute($sql);
 	}
 
+	function getTransaction($request_id)
+  {
+    $sql = 'SELECT *
+        FROM `'._DB_PREFIX_.'vt_transaction`
+        WHERE `request_id` = \''.$request_id.'\'';
+    $result = Db::getInstance()->getRow($sql);
+    return $result; 
+  }
+
 	// determine the phone number to make Veritrans happy
 	function determineValidPhone($home_phone = '', $mobile_phone = '')
 	{
@@ -953,7 +962,7 @@ class VeritransPay extends PaymentModule
 		} else if (Configuration::get('VT_API_VERSION') == 1)
 		{
 		  $history->id_order = (int)$veritrans_notification->orderId; 
-		  $transaction = getTransaction($veritrans_notification->orderId);
+		  $transaction = $this->getTransaction($veritrans_notification->orderId);
 		  $token_merchant = $transaction['token_merchant'];
 		  
 		  if ($veritrans_notification->status != 'fatal')
@@ -968,14 +977,15 @@ class VeritransPay extends PaymentModule
 		      {
 		        $history->changeIdOrderState(Configuration::get('VT_PAYMENT_FAILURE_STATUS_MAP'), (int)$veritrans_notification->orderId);
 		      }
-		      else
+		      elseif ($veritrans_notification->mStatus == 'challenge')
 		      {
-		        echo 'other<br/>';
-		      }     
+		        $history->changeIdOrderState(Configuration::get('VT_PAYMENT_FAILURE_STATUS_MAP'), (int)$veritrans_notification->orderId);
+		      }
+		      $history->add(true);
 		    }
 		    else
 		    {
-		      echo 'no transaction<br/>';
+		    	echo 'no transaction<br/>';
 		    }
 		  }
 		}
