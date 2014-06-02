@@ -774,7 +774,13 @@ class VeritransPay extends PaymentModule
 	    if (Currency::exists('IDR', null))
 	    {
 	      // use default rate
-	      $conversion_func = function($input) use($cart_currency) { return Tools::convertPriceFull($input, $cart_currency, new Currency(Currency::getIdByIsoCode('IDR'))); };
+	      if (version_compare(Configuration::get('PS_VERSION_DB'), '1.5') == -1)
+	      {
+	      	$conversion_func = function($input) use($cart_currency) { return Tools::convertPrice($input, new Currency(Currency::getIdByIsoCode('IDR')), true); };
+	      } else
+	      {
+	      	$conversion_func = function($input) use($cart_currency) { return Tools::convertPriceFull($input, $cart_currency, new Currency(Currency::getIdByIsoCode('IDR'))); };
+	      }
 	    } else
 	    {
 	      // use rate
