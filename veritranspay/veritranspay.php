@@ -485,7 +485,7 @@ class VeritransPay extends PaymentModule
 	private function _displayFormOld()
 	{
 		$order_states = array();
-		foreach (OrderState::getOrderStates($this->context->language->id) as $state) {
+		foreach (OrderState::getOrderStates($this->context->cookie->id_lang) as $state) {
 			array_push($order_states, array(
 				'id_option' => $state['id_order_state'],
 				'name' => $state['name']
