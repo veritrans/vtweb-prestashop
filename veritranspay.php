@@ -32,7 +32,7 @@ class VeritransPay extends PaymentModule
 	{
 		$this->name = 'veritranspay';
 		$this->tab = 'payments_gateways';
-		$this->version = '0.6';
+		$this->version = '0.7';
 		$this->author = 'Veritrans';
 		$this->bootstrap = true;
 		
@@ -421,7 +421,6 @@ class VeritransPay extends PaymentModule
 								'label' => 'No'
 								)
 							),
-						'class' => 'v1_settings sensitive'
 						),
 					array(
 						'type' => 'select',
@@ -740,7 +739,8 @@ class VeritransPay extends PaymentModule
     $veritrans->merchant_hash_key = Configuration::get('VT_MERCHANT_HASH');
     $veritrans->client_key = Configuration::get('VT_CLIENT_KEY');
     $veritrans->server_key = Configuration::get('VT_SERVER_KEY');
-    $veritrans->enable_3d_secure = Configuration::get('VT_3D_SECURE');
+    if (Configuration::get('VT_3D_SECURE') == 'on' || Configuration::get('VT_3D_SECURE') == 1)
+    	$veritrans->enable_3d_secure = true;
     $veritrans->force_sanitization = true;
     
     // Billing Address
