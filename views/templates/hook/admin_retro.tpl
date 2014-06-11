@@ -104,6 +104,12 @@
       <!-- PAYMENT_FAILURE_STATUS_MAP -->
 
       <tr>
+        <td width="300" style="vertical-align: top;">Enable 3D Secure?</td>
+        <td><input type="checkbox" name="VT_3D_SECURE" value="{$enable_3d_secure}" style="width: 300px;" /></td>
+      </tr>
+      <!-- 3D_SECURE -->
+
+      <tr>
         <td width="300" style="vertical-align: top;">Kurs</td>
         <td><input type="text" name="VT_KURS" value="{$kurs}" style="width: 300px;" /></td>
       </tr>

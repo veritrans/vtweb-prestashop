@@ -106,6 +106,11 @@ class VeritransPay extends PaymentModule
 		$this->initContext();
 	}
 
+	public function isOldPrestashop()
+	{
+		return version_compare(Configuration::get('PS_VERSION_DB'), '1.5') == -1;
+	}
+
 	public function install()
 	{
 		// create a new order state for Veritrans, since Prestashop won't assign order ID unless it is validated,
@@ -114,7 +119,13 @@ class VeritransPay extends PaymentModule
 		$order_state = new OrderStateCore();
 		$order_state->name = array((int)Configuration::get('PS_LANG_DEFAULT') => 'Awaiting Veritrans payment');;
 		$order_state->module_name = 'veritranspay';
-		$order_state->color = '#0000FF';
+		if ($this->isOldPrestashop()) {
+			$order_state->color = '#0000FF';
+		} else
+		{
+			$order_state->color = 'RoyalBlue';
+		}
+		
 		$order_state->unremovable = false;
 		$order_state->add();
 
@@ -505,6 +516,7 @@ class VeritransPay extends PaymentModule
 			'server_key' => htmlentities(Configuration::get('VT_SERVER_KEY'), ENT_COMPAT, 'UTF-8'),
 			'environments' => array(Veritrans::ENVIRONMENT_DEVELOPMENT => 'Development', Veritrans::ENVIRONMENT_PRODUCTION => 'Production'),
 			'environment' => htmlentities(Configuration::get('VT_ENVIRONMENT'), ENT_COMPAT, 'UTF-8'),
+			'enable_3d_secure' => htmlentities(Configuration::get('VT_3D_SECURE'), ENT_COMPAT, 'UTF-8'),
 			'statuses' => $order_states,
 			'payment_success_status_map' => htmlentities(Configuration::get('VT_PAYMENT_SUCCESS_STATUS_MAP'), ENT_COMPAT, 'UTF-8'),
 			'payment_challenge_status_map' => htmlentities(Configuration::get('VT_PAYMENT_CHALLENGE_STATUS_MAP'), ENT_COMPAT, 'UTF-8'),
