@@ -91,8 +91,12 @@ class VeritransPay extends PaymentModule
 		$this->description = $this->l('Accept payments for your products via Veritrans.');
 		$this->confirmUninstall = $this->l('Are you sure about uninstalling Veritrans pay?');
 		
-		if (!isset($this->veritrans_merchant_id) || !isset($this->veritrans_merchant_hash))
-			$this->warning = $this->l('Merchant ID and Merchant Hash must be configured before using this module.');
+		if (Configuration::get('VT_API_VERSION') == 1)
+		{
+			if (!isset($this->veritrans_merchant_id) || !isset($this->veritrans_merchant_hash))
+				$this->warning = $this->l('Merchant ID and Merchant Hash must be configured before using this module.');	
+		}
+		
 		
 		if (!count(Currency::checkPaymentCurrencies($this->id)))
 			$this->warning = $this->l('No currency has been set for this module.');
