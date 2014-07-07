@@ -128,56 +128,14 @@ class VeritransPayValidationModuleFrontController extends ModuleFrontController
     var_dump($keys['errors']);
     exit;
   }
-  if ($veritrans_api_version == 1 && $veritrans_payment_method == 'vtweb')
+  if ($veritrans_api_version == 2 && $veritrans_payment_method == 'vtweb')
   {
-    $this->context->smarty->assign(array(
-      'payment_redirect_url' => $keys['payment_redirect_url'],
-      'order_id' => $keys['order_id'],
-      'token_browser' => $keys['token_browser'],
-      'merchant_id' => $keys['merchant_id'],
-      'this_path' => $this->module->getPathUri(),
-      'this_path_ssl' => Tools::getShopDomainSsl(true, true).__PS_BASE_URI__.'modules/'.$this->module->name.'/'
-    ));
-    $this->setTemplate('v1_vtweb.tpl');
-
-  //    $keys = $veritrans->getTokens();
-      
-  //    if ($keys)
-  //    { 
-  //      $token_browser = $keys['token_browser'];
-  //      $token_merchant = $keys['token_merchant'];
-  //      $error_message = '';
-  //      $this->insertTransaction($cart->id_customer, $cart->id, $currency->id, $veritrans->order_id, $token_merchant);
-
-  //      $this->context->smarty->assign(array(
-	 //    	'payment_redirect_url' => Veritrans::PAYMENT_REDIRECT_URL,
-	 //    	'order_id' => $veritrans->order_id,
-	 //    	'token_browser' => $token_browser,
-	 //    	'merchant_id' => $veritrans->merchant_id,
-	 //    	'this_path' => $this->module->getPathUri(),
-  //     	'this_path_ssl' => Tools::getShopDomainSsl(true, true).__PS_BASE_URI__.'modules/'.$this->module->name.'/'
-	 //    	));
-
-  //      $this->setTemplate('v1_vtweb.tpl');
-
-  //    } else
-  //    {
-  //      $token_browser = '';
-  //      $token_merchant = '';
-  //      $error_message = $veritrans->errors;
-  //    }      
-      
-    } else if ($veritrans_api_version == 1 && $veritrans_payment_method == 'vtdirect')
-    {
-
-    } else if ($veritrans_api_version == 2 && $veritrans_payment_method == 'vtweb')
-    {
       Tools::redirectLink($keys['redirect_url']);
-    } else if ($veritrans_api_version == 2 && $veritrans_payment_method == 'vtdirect')
-    {
+  } else if ($veritrans_api_version == 2 && $veritrans_payment_method == 'vtdirect')
+  {
 
-    }
-	}
+  }
+  }
 
 	public function setMedia()
 	{

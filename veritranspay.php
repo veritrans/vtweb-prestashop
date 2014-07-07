@@ -3,8 +3,9 @@
 if (!defined('_PS_VERSION_'))
 	exit;
 
-require_once('library/veritrans.php');
-require_once 'library/lib/veritrans_notification.php';
+require_once('library/veritrans/Veritrans.php');
+require_once 'library/veritrans/Veritrans/Notification.php';
+require_once 'library/veritrans/Veritrans/Transaction.php';
 
 class VeritransPay extends PaymentModule
 {
@@ -41,9 +42,7 @@ class VeritransPay extends PaymentModule
 		$this->veritrans_convenience_fee = 0;
 
 		// key length must be between 0-32 chars to maintain compatibility with <= 1.5
-		$this->config_keys = array(
-			'VT_MERCHANT_ID', 
-			'VT_MERCHANT_HASH',
+		$this->config_keys = array(			
 			'VT_CLIENT_KEY',
 			'VT_SERVER_KEY',
 			'VT_API_VERSION',
@@ -54,7 +53,9 @@ class VeritransPay extends PaymentModule
 			'VT_PAYMENT_SUCCESS_STATUS_MAP',
 			'VT_PAYMENT_FAILURE_STATUS_MAP',
 			'VT_PAYMENT_CHALLENGE_STATUS_MAP',
-			'VT_ENVIRONMENT'
+			'VT_ENVIRONMENT',
+			'ENABLED_CIMB',
+			'ENABLED_MANDIRI'
 			);
 
 		foreach (array('BNI', 'MANDIRI', 'CIMB') as $bank) {
@@ -70,20 +71,17 @@ class VeritransPay extends PaymentModule
 				$this->{strtolower($key)} = $config[$key];
 		}
 		
-		// if (isset($config['VT_MERCHANT_HASH']))
-		// 	$this->veritrans_merchant_hash = $config['VT_MERCHANT_HASH'];
+		
 		if (isset($config['VT_KURS']))
 			$this->veritrans_kurs = $config['VT_KURS'];
 		else
 			Configuration::set('VT_KURS', 10000);
-		// else Configuration::set('VT_KURS',1);
-		// if (isset($config['VT_CONVENIENCE_FEE']))
-		// 	$this->veritrans_convenience_fee = $config['VT_CONVENIENCE_FEE'];
-		// else Configuration::set('VT_CONVENIENCE_FEE',0);
-		if (isset($config['VT_API_VERSION']) && in_array($config['VT_API_VERSION'], array(1, 2)))
-			$this->veritrans_api_version = $config['VT_API_VERSION'];
-		else
-			Configuration::set('VT_API_VERSION', 2);
+		
+		Configuration::set('VT_API_VERSION', 2);
+		if (!isset($config['ENABLED_CIMB']))
+			Configuration::set('ENABLED_CIMB', 0);		
+		if (!isset($config['ENABLED_MANDIRI']))
+			Configuration::set('ENABLED_MANDIRI', 0);
 
 		parent::__construct();
 
@@ -91,20 +89,9 @@ class VeritransPay extends PaymentModule
 		$this->description = $this->l('Accept payments for your products via Veritrans.');
 		$this->confirmUninstall = $this->l('Are you sure about uninstalling Veritrans pay?');
 		
-		if (Configuration::get('VT_API_VERSION') == 1)
-		{
-			if (!isset($this->veritrans_merchant_id) || !isset($this->veritrans_merchant_hash))
-				$this->warning = $this->l('Merchant ID and Merchant Hash must be configured before using this module.');	
-		}
-		
 		
 		if (!count(Currency::checkPaymentCurrencies($this->id)))
 			$this->warning = $this->l('No currency has been set for this module.');
-
-		$this->extra_mail_vars = array(
-			'{veritrans_merchant_id}' => Configuration::get('VT_MERCHANT_ID'),
-			'{veritrans_merchant_hash}' => nl2br(Configuration::get('VT_MERCHANT_HASH'))
-			);
 
 		// Retrocompatibility
 		$this->initContext();
@@ -134,7 +121,7 @@ class VeritransPay extends PaymentModule
 		$order_state->add();
 
 		Configuration::updateValue('VT_ORDER_STATE_ID', $order_state->id);
-		Configuration::updateValue('VT_API_VERSION', 1);
+		Configuration::updateValue('VT_API_VERSION', 2);
 
 		if (!parent::install() || 
 			!$this->registerHook('payment') ||
@@ -161,10 +148,7 @@ class VeritransPay extends PaymentModule
 			$order_state->delete();
 		}
 		
-		// foreach ($this->config_keys as $key) {
-		// 	if (!Configuration::deleteByName($key))
-		// 		$status = false;
-		// }
+		
 		if (!parent::uninstall())
 			$status = false;
 		return $status;
@@ -180,13 +164,7 @@ class VeritransPay extends PaymentModule
 					$this->_postErrors[] = $this->l('Client Key is required.');
 				if (!Tools::getValue('VT_SERVER_KEY'))
 					$this->_postErrors[] = $this->l('Server Key is required.');
-			} else
-			{
-				if (!Tools::getValue('VT_MERCHANT_HASH'))
-					$this->_postErrors[] = $this->l('Merchant Hash is required.');
-				if (!Tools::getValue('VT_MERCHANT_ID'))
-					$this->_postErrors[] = $this->l('Merchant ID is required.');
-			}
+			} 
 
 			// validate conversion rate existence
 			if (!Currency::exists('IDR', null) && !Tools::getValue('VT_KURS'))
@@ -200,9 +178,12 @@ class VeritransPay extends PaymentModule
 	{
 		if (Tools::isSubmit('btnSubmit'))
 		{
+			error_log('masuk submit');
 			foreach ($this->config_keys as $key) {
+				error_log($key. ' - '.Tools::getValue($key));
 				Configuration::updateValue($key, Tools::getValue($key));
-			}	
+			}
+			error_log('masuk submit ' . Configuration::get('ENABLED_MANDIRI'). ' '.Configuration::get('ENABLED_MANDIRI'));
 		}
 		$this->_html .= '<div class="alert alert-success conf confirm"> '.$this->l('Settings updated').'</div>';
 	}
@@ -278,7 +259,6 @@ class VeritransPay extends PaymentModule
 				'name' => 'Production'
 				)
 			);
-
 		$fields_form = array(
 			'form' => array(
 				'legend' => array(
@@ -286,28 +266,6 @@ class VeritransPay extends PaymentModule
 					'icon' => 'icon-cogs'
 					),
 				'input' => array(
-					array(
-						'type' => 'select',
-						'label' => 'API Version',
-						'required' => true,
-						'name' => 'VT_API_VERSION',
-						'is_bool' => false,
-						'options' => array(
-							'query' => array(
-								array(
-									'id_option' => 1,
-									'name' => 'v1'
-									),
-								array(
-									'id_option' => 2,
-									'name' => 'v2'
-									)
-								),
-							'id' => 'id_option',
-							'name' => 'name'
-							),
-						'id' => 'veritransApiVersion'
-						),
 					array(
 						'type' => 'select',
 						'label' => 'Environment',
@@ -319,22 +277,6 @@ class VeritransPay extends PaymentModule
 							'name' => 'name'
 							),
 						'class' => 'v2_settings sensitive'
-						),
-					array(
-						'type' => 'text',
-						'label' => 'Merchant ID',
-						'name' => 'VT_MERCHANT_ID',
-						'required' => true,
-						'desc' => 'Consult to your Merchant Administration Portal for the value of this field.',
-						'class' => 'v1_vtweb_settings sensitive'
-						),
-					array(
-						'type' => 'text',
-						'label' => 'Merchant Hash Key',
-						'name' => 'VT_MERCHANT_HASH',
-						'required' => true,
-						'desc' => 'Consult to your Merchant Administration Portal for the value of this field.',
-						'class' => 'v1_vtweb_settings sensitive'
 						),
 					array(
 						'type' => 'text',
@@ -406,6 +348,44 @@ class VeritransPay extends PaymentModule
 							'name' => 'name'
 							),
 						'class' => 'v1_vtweb_settings sensitive'
+						),
+					array(
+						'type' => 'radio',
+						'label' => 'Enable cimb click payment?',
+						'name' => 'ENABLED_CIMB',
+						'required' => true,
+						'is_bool' => true,
+						'values' => array(
+							array(
+								'id' => 'cimb_yes',
+								'value' => 1,
+								'label' => 'Yes'
+								),
+							array(
+								'id' => 'cimb_no',
+								'value' => 0,
+								'label' => 'No'
+								)
+							),
+						),
+					array(
+						'type' => 'radio',
+						'label' => 'Enable mandiri clickpay?',
+						'name' => 'ENABLED_MANDIRI',
+						'required' => true,
+						'is_bool' => true,
+						'values' => array(
+							array(
+								'id' => 'mandiri_yes',
+								'value' => 1,
+								'label' => 'Yes'
+								),
+							array(
+								'id' => 'mandiri_no',
+								'value' => 0,
+								'label' => 'No'
+								)
+							),
 						),
 					array(
 						'type' => 'radio',
@@ -509,17 +489,17 @@ class VeritransPay extends PaymentModule
 
 		$this->context->smarty->assign(array(
 			'form_url' => Tools::htmlentitiesUTF8($_SERVER['REQUEST_URI']),
-			'merchant_id' => htmlentities(Configuration::get('VT_MERCHANT_ID'), ENT_COMPAT, 'UTF-8'),
-			'merchant_hash_key' => htmlentities(Configuration::get('VT_MERCHANT_HASH'), ENT_COMPAT, 'UTF-8'),
 			'api_version' => htmlentities(Configuration::get('VT_API_VERSION'), ENT_COMPAT, 'UTF-8'),
 			'api_versions' => array(1 => 'v1', 2 => 'v2'),
 			'payment_type' => htmlentities(Configuration::get('VT_PAYMENT_TYPE'), ENT_COMPAT, 'UTF-8'),
 			'payment_types' => array('vtweb' => 'VT-Web', 'vtdirect' => 'VT-Direct'),
 			'client_key' => htmlentities(Configuration::get('VT_CLIENT_KEY'), ENT_COMPAT, 'UTF-8'),
 			'server_key' => htmlentities(Configuration::get('VT_SERVER_KEY'), ENT_COMPAT, 'UTF-8'),
-			'environments' => array(Veritrans::ENVIRONMENT_DEVELOPMENT => 'Development', Veritrans::ENVIRONMENT_PRODUCTION => 'Production'),
+			'environments' => array(Veritrans_Config::ENVIRONMENT_DEVELOPMENT => 'Development', Veritrans_Config::ENVIRONMENT_PRODUCTION => 'Production'),
 			'environment' => htmlentities(Configuration::get('VT_ENVIRONMENT'), ENT_COMPAT, 'UTF-8'),
 			'enable_3d_secure' => htmlentities(Configuration::get('VT_3D_SECURE'), ENT_COMPAT, 'UTF-8'),
+			'enabled_cimb' => htmlentities(Configuration::get('ENABLED_CIMB'), ENT_COMPAT, 'UTF-8'),
+			'enabled_mandiri' => htmlentities(Configuration::get('ENABLED_MANDIRI'), ENT_COMPAT, 'UTF-8'),
 			'statuses' => $order_states,
 			'payment_success_status_map' => htmlentities(Configuration::get('VT_PAYMENT_SUCCESS_STATUS_MAP'), ENT_COMPAT, 'UTF-8'),
 			'payment_challenge_status_map' => htmlentities(Configuration::get('VT_PAYMENT_CHALLENGE_STATUS_MAP'), ENT_COMPAT, 'UTF-8'),
@@ -618,6 +598,10 @@ class VeritransPay extends PaymentModule
 		));
 	
 		// 1.4 compatibility
+		error_log('order status');
+		error_log($history['id_order_state']);
+		error_log(Configuration::get('VT_PAYMENT_FAILURE_STATUS_MAP').' '.Configuration::get('VT_PAYMENT_CHALLENGE_STATUS_MAP').' '.Configuration::get('VT_PAYMENT_SUCCESS_STATUS_MAP'));
+
 		if (version_compare(Configuration::get('PS_VERSION_DB'), '1.5') == -1) {
 			return $this->display(__FILE__, 'views/templates/hook/order_confirmation.tpl');
 		} else
@@ -676,7 +660,7 @@ class VeritransPay extends PaymentModule
 
 		$smarty->assign(array(
 			'payment_type' => Configuration::get('VT_PAYMENT_TYPE'),
-      'api_version' => Configuration::get('VT_API_VERSION'),
+			'api_version' => Configuration::get('VT_API_VERSION'),
 			'error_message' => '',
 			'link' => $link,
 			'nbProducts' => $cart->nbProducts(),
@@ -710,149 +694,186 @@ class VeritransPay extends PaymentModule
 			die($this->module->l('This payment method is not available.', 'validation'));
 
 		$customer = new Customer($cart->id_customer);
-    if (!Validate::isLoadedObject($customer))
-     Tools::redirect('index.php?controller=order&step=1');
+		if (!Validate::isLoadedObject($customer))
+			Tools::redirect('index.php?controller=order&step=1');
 
-   	$usd = Configuration::get('VT_KURS');
-    $cf = Configuration::get('VT_CONVENIENCE_FEE') * 0.01;
-    $veritrans = new Veritrans();
-    $url = Veritrans::PAYMENT_REDIRECT_URL;
+		$usd = Configuration::get('VT_KURS');
+		$cf = Configuration::get('VT_CONVENIENCE_FEE') * 0.01;
 
-    if (version_compare(Configuration::get('PS_VERSION_DB'), '1.5') == -1)
-    {
-    	$shipping_cost = $cart->getOrderShippingCost();
-    } else
-    {
-    	$shipping_cost = $cart->getTotalShippingCost();
-    }
+		$list_enable_payments = array("credit_card");
+		
+		if (Configuration::get('ENABLED_CIMB')){
+			$list_enable_payments[] = "cimb_clicks";
+		}
+		if (Configuration::get('ENABLED_MANDIRI')){
+			$list_enable_payments[] = "mandiri_clickpay";
+		}
+		
+		$veritrans = new Veritrans_Config();   //coba_cek
+		//SETUP
+		Veritrans_Config::$serverKey = Configuration::get('VT_SERVER_KEY'); //edit_tambah
+		Veritrans_Config::$isProduction = Configuration::get('VT_ENVIRONMENT') == 'Production' ? true : false; //edit_tambah		
 
-    $currency = new Currency($cookie->id_currency);
-    $total = $cart->getOrderTotal(true, Cart::BOTH);
-    $mailVars = array(
-     '{merchant_id}' => Configuration::get('MERCHANT_ID'),
-     '{merchant_hash}' => nl2br(Configuration::get('MERCHANT_HASH'))
-    );
+		$url = Veritrans_Config::getBaseUrl(); //edit_ubah //$url = Veritrans_Config::PAYMENT_REDIRECT_URL; //coba_cek
 
-    $billing_address = new Address($cart->id_address_invoice);
-    $delivery_address = new Address($cart->id_address_delivery);
+		if (version_compare(Configuration::get('PS_VERSION_DB'), '1.5') == -1)
+		{
+			$shipping_cost = $cart->getOrderShippingCost();
+		} else
+		{
+			$shipping_cost = $cart->getTotalShippingCost();
+		}
 
-    $veritrans->version = Configuration::get('VT_API_VERSION');
-    $veritrans->environment = Configuration::get('VT_ENVIRONMENT');
-    $veritrans->payment_type = Configuration::get('VT_PAYMENT_TYPE') == 'vtdirect' ? Veritrans::VT_DIRECT : Veritrans::VT_WEB;
-    $veritrans->merchant_id = Configuration::get('VT_MERCHANT_ID');
-    $veritrans->merchant_hash_key = Configuration::get('VT_MERCHANT_HASH');
-    $veritrans->client_key = Configuration::get('VT_CLIENT_KEY');
-    $veritrans->server_key = Configuration::get('VT_SERVER_KEY');
-    if (Configuration::get('VT_3D_SECURE') == 'on' || Configuration::get('VT_3D_SECURE') == 1)
-    	$veritrans->enable_3d_secure = true;
-    $veritrans->force_sanitization = true;
-    
-    // Billing Address
-    $veritrans->first_name = $billing_address->firstname;
-    $veritrans->last_name = $billing_address->lastname;
-    $veritrans->address1 = $billing_address->address1;
-    $veritrans->address2 = $billing_address->address2;
-    $veritrans->city = $billing_address->city;
-    $veritrans->country_code = $billing_address->id_country;
-    $veritrans->postal_code = $billing_address->postcode;
-    $veritrans->phone = $this->determineValidPhone($billing_address->phone, $billing_address->phone_mobile);
-    $veritrans->email = $customer->email;
-    
-    if($cart->isVirtualCart()) {
-     $veritrans->required_shipping_address = 0;
-     $veritrans->billing_different_with_shipping = 0;
-    } else {
-     $veritrans->required_shipping_address = 1;
-     if ($cart->id_address_delivery != $cart->id_address_invoice)
-     {
-       $veritrans->billing_different_with_shipping = 1;
-       $veritrans->shipping_first_name = $delivery_address->firstname;
-       $veritrans->shipping_last_name = $delivery_address->lastname;
-       $veritrans->shipping_address1 = $delivery_address->address1;
-       $veritrans->shipping_address2 = $delivery_address->address2;
-       $veritrans->shipping_city = $delivery_address->city;
-       $veritrans->shipping_country_code = $delivery_address->id_country;
-       $veritrans->shipping_postal_code = $delivery_address->postcode;
-       $veritrans->shipping_phone = $this->determineValidPhone($delivery_address->phone, $delivery_address->phone_mobile);
-     } else
-     {
-       $veritrans->billing_different_with_shipping = 0;
-     }
-    }  
-    
-    $items = $this->addCommodities($cart, $shipping_cost, $usd);
-    
-    // convert the currency
-    $cart_currency = new Currency($cart->id_currency);
-    if ($cart_currency->iso_code != 'IDR')
-    {
-	    // check whether if the IDR is installed or not
-	    if (Currency::exists('IDR', null))
-	    {
-	      // use default rate
-	      if (version_compare(Configuration::get('PS_VERSION_DB'), '1.5') == -1)
-	      {
-	      	$conversion_func = function($input) use($cart_currency) { return Tools::convertPrice($input, new Currency(Currency::getIdByIsoCode('IDR')), true); };
-	      } else
-	      {
-	      	$conversion_func = function($input) use($cart_currency) { return Tools::convertPriceFull($input, $cart_currency, new Currency(Currency::getIdByIsoCode('IDR'))); };
-	      }
-	    } else
-	    {
-	      // use rate
-	      $conversion_func = function($input) { return $input * intval(Configuration::get('VT_KURS')); };
-	    }
-	    foreach ($items as &$item) {
-	      $item['price'] = intval(round(call_user_func($conversion_func, $item['price'])));
-	    }
-    }
-    $veritrans->items = $items;
+		$currency = new Currency($cookie->id_currency);
+		$total = $cart->getOrderTotal(true, Cart::BOTH);
+		//coba_cek
+		 $mailVars = array(
+		// 	'{merchant_id}' => Configuration::get('MERCHANT_ID'),
+		// 	'{merchant_hash}' => nl2br(Configuration::get('MERCHANT_HASH'))
+		 );
+				
+		$billing_address = new Address($cart->id_address_invoice);
+		$delivery_address = new Address($cart->id_address_delivery);
+		
+		//coba_cek
+		//$veritrans->version = Configuration::get('VT_API_VERSION');
+		//$veritrans->environment = Configuration::get('VT_ENVIRONMENT');
+		//$veritrans->payment_type = Configuration::get('VT_PAYMENT_TYPE') == 'vtdirect' ? Veritrans_Config::VT_DIRECT : Veritrans_Config::VT_WEB;
+		//$veritrans->merchant_id = Configuration::get('VT_MERCHANT_ID');
+		//$veritrans->merchant_hash_key = Configuration::get('VT_MERCHANT_HASH');
+		//$veritrans->client_key = Configuration::get('VT_CLIENT_KEY');
+		//$veritrans->server_key = Configuration::get('VT_SERVER_KEY');
+		//if (Configuration::get('VT_3D_SECURE') == 'on' || Configuration::get('VT_3D_SECURE') == 1)
+		//	$veritrans->enable_3d_secure = true;
+		//$veritrans->force_sanitization = true;
+    	if (Configuration::get('VT_3D_SECURE') == 'on' || Configuration::get('VT_3D_SECURE') == 1)
+			Veritrans_Config::$is3ds = true;		
 
-    $this->validateOrder($cart->id, Configuration::get('VT_ORDER_STATE_ID'), $cart->getOrderTotal(true, Cart::BOTH), $this->displayName, NULL, $mailVars, (int)$currency->id, false, $customer->secure_key);
-    $veritrans->order_id = $this->currentOrder;
+		// Billing Address 
+		//coba_cek						
+		//$veritrans->address2 = $billing_address->address2;						
+		//$veritrans->email = $customer->email;
 
-    if ($veritrans->version == 1 && $veritrans->payment_type == Veritrans::VT_WEB)
-    {
-     	$keys = $veritrans->getTokens();
-      if ($keys)
-      {
-      	$keys['payment_redirect_url'] = Veritrans::PAYMENT_REDIRECT_URL;
-      	$keys['order_id'] = $veritrans->order_id;
-      	$keys['merchant_id'] = $veritrans->merchant_id;
-      	$keys['errors'] = NULL;
-      	$this->insertTransaction($cart->id_customer, $cart->id, $currency->id, $veritrans->order_id, $keys['token_merchant']);        
-     } else
-     {
-       	$keys['errors'] = $veritrans->errors;
-     }
+    	$params_billing_address = array(
+    			'first_name' => $billing_address->firstname, //$veritrans->first_name = $billing_address->firstname;
+				'last_name' => $billing_address->lastname, //$veritrans->last_name = $billing_address->lastname;
+				'address' => $billing_address->address1, //$veritrans->address1 = $billing_address->address1;
+				'city' => $billing_address->city, //$veritrans->city = $billing_address->city;
+				'postal_code' => $billing_address->postcode, //$veritrans->postal_code = $billing_address->postcode;
+				'phone' => $this->determineValidPhone($billing_address->phone, $billing_address->phone_mobile), //$veritrans->phone = $this->determineValidPhone($billing_address->phone, $billing_address->phone_mobile);
+				//'country_code' => $billing_address->id_country //$veritrans->country_code = $billing_address->id_country;
+    		);
 
-     return $keys;
-      
-    } else if ($veritrans->version == 1 && $veritrans->payment_type == Veritrans::VT_DIRECT)
-    {
-     // handle v1's VTDirect, v2's VTWEB, and v2's VTDIRECT here
-    } else if ($veritrans->version == 2 && $veritrans->payment_type == Veritrans::VT_WEB)
-    {
-    	$keys = $veritrans->getTokens();
-    	if (!in_array($keys['status_code'], array(200, 201, 202)))
-    	{
-    		$keys['errors'] = array(
-    			'status_code' => $keys['status_code'],
-    			'status_message' => $keys['status_message']);
-    	} else
-    	{
-    		$keys['errors'] = NULL;
-    	}
-    	return $keys;
+		if($cart->isVirtualCart()) {
+			//$veritrans->required_shipping_address = 0;
+			//$veritrans->billing_different_with_shipping = 0;
+		} else {
+			//coba_cek
+			//$veritrans->required_shipping_address = 1;
+			if ($cart->id_address_delivery != $cart->id_address_invoice)
+			{
+				//coba_cek
+				//alamat shipping address sama billing address beda
+				//$veritrans->billing_different_with_shipping = 1;
+				$params_shipping_address = array(
+					'first_name' => $delivery_address->firstname, //$veritrans->shipping_first_name = $delivery_address->firstname;
+					'last_name' => $delivery_address->lastname, //$veritrans->shipping_last_name = $delivery_address->lastname;
+					'address' => $delivery_address->address1, //$veritrans->shipping_address1 = $delivery_address->address1;
+					'city' => $delivery_address->city, //$veritrans->shipping_city = $delivery_address->city;
+					'postal_code' => $delivery_address->postcode,//$veritrans->shipping_postal_code = $delivery_address->postcode;
+					'phone' => $this->determineValidPhone($delivery_address->phone, $delivery_address->phone_mobile), //$veritrans->shipping_phone = $this->determineValidPhone($delivery_address->phone, $delivery_address->phone_mobile);
+					//'country_code' => $delivery_address->id_country//$veritrans->shipping_country_code = $delivery_address->id_country;				
+					);												
+				//$veritrans->shipping_address2 = $delivery_address->address2;												
+			} else
+			{
+				//$veritrans->billing_different_with_shipping = 0;
+				//alamat shipping address sama billing address sama
+				$params_shipping_address = $params_billing_address;
+			}
+		}  
     	
-    } else if ($veritrans->version == 2 && $veritrans->payment_type == Veritrans::VT_DIRECT)
-    {
+		$params_customer_details = array(
+			'first_name' => $billing_address->firstname, //bisa pakai variable customer
+			'last_name' =>  $billing_address->lastname, //bisa pakai variable customer
+			'email' => $customer->email, 
+			'phone' => $this->determineValidPhone($billing_address->phone, $billing_address->phone_mobile), 
+			'billing_address' => $params_billing_address, 
+			'shipping_address' => $params_shipping_address
+			);
 
-    } else
-    {
-    	echo 'The Veritrans API versions and the payment type is not valid.';
-    	exit;
-    }
+		$items = $this->addCommodities($cart, $shipping_cost, $usd);				
+		
+		// convert the currency
+		$cart_currency = new Currency($cart->id_currency);
+		if ($cart_currency->iso_code != 'IDR')
+		{
+			// check whether if the IDR is installed or not
+			if (Currency::exists('IDR', null))
+			{
+			  // use default rate
+			  if (version_compare(Configuration::get('PS_VERSION_DB'), '1.5') == -1)
+			  {
+				$conversion_func = function($input) use($cart_currency) { return Tools::convertPrice($input, new Currency(Currency::getIdByIsoCode('IDR')), true); };
+			  } else
+			  {
+				$conversion_func = function($input) use($cart_currency) { return Tools::convertPriceFull($input, $cart_currency, new Currency(Currency::getIdByIsoCode('IDR'))); };
+			  }
+			} else
+			{
+			  // use rate
+			  $conversion_func = function($input) { return $input * intval(Configuration::get('VT_KURS')); };
+			}
+			foreach ($items as &$item) {						
+				$item['price'] = intval(round(call_user_func($conversion_func, $item['price'])));				
+			}
+		}		
+				
+
+		$this->validateOrder($cart->id, Configuration::get('VT_ORDER_STATE_ID'), $cart->getOrderTotal(true, Cart::BOTH), $this->displayName, NULL, $mailVars, (int)$currency->id, false, $customer->secure_key);				
+		
+		$gross_amount = 0;
+		unset($item);
+		foreach ($items as $item) {				
+			$gross_amount += $item['price'] * $item['quantity'];
+		}
+		
+		$params_all = array(
+			'payment_type' => Configuration::get('VT_PAYMENT_TYPE'),
+			'vtweb' => array (
+					'enabled_payments' => $list_enable_payments
+				),
+			'transaction_details' => array(
+				'order_id' => $this->currentOrder, 
+				'gross_amount' => $gross_amount
+				),
+			'item_details' => $items,
+			'customer_details' => $params_customer_details
+			);
+
+		if (Configuration::get('VT_API_VERSION') == 2 && Configuration::get('VT_PAYMENT_TYPE') != 'vtdirect') //transaksi https://github.com/veritrans/veritrans-php/blob/vtweb-2/examples/v2/vt_web/checkout_process.php line 77
+		{						
+			try {
+			  // Redirect to Veritrans VTWeb page
+			  	$keys['redirect_url'] = Veritrans_Vtweb::getRedirectionUrl($params_all);
+			  	error_log($keys['redirect_url']);
+			}
+			catch (Exception $e) {
+				error_log('error disini');
+			  	$keys['errors'] = $e->getMessage();
+			}
+			return $keys;
+			
+		} else
+		if (Configuration::get('VT_API_VERSION') == 2 && Configuration::get('VT_PAYMENT_TYPE') == 'vtdirect') //transaksi https://github.com/veritrans/veritrans-php/blob/vtweb-2/examples/v2/vt_web/checkout_process.php line 77
+		{
+			echo 'not yet implementation.';
+			exit;
+		} else
+		{
+			echo 'The Veritrans API versions and the payment type is not valid.';
+			exit;
+		}
 	}
 
 	public function setMedia()
@@ -869,21 +890,19 @@ class VeritransPay extends PaymentModule
 
 		foreach ($products as $aProduct) {
 			$commodities[] = array(
-				"item_id" => $aProduct['id_product'],
+				"id" => $aProduct['id_product'],
 				"price" =>  $aProduct['price_wt'],
 				"quantity" => $aProduct['cart_quantity'],
-				"item_name1" => $aProduct['name'],
-				"item_name2" => $aProduct['name']
+				"name" => $aProduct['name']				
 			);
 		}
 
 		if($shipping_cost != 0){
 			$commodities[] = array(
-				"item_id" => 'SHIPPING_FEE',
+				"id" => 'SHIPPING_FEE',
 				"price" => $shipping_cost, // defer currency conversion until the very last time
 				"quantity" => '1',
-				"item_name1" => 'Shipping Cost',
-				"item_name2" => 'Biaya Pengiriman'
+				"name" => 'Shipping Cost',				
 			);			
 		}
 		
@@ -903,13 +922,13 @@ class VeritransPay extends PaymentModule
 	}
 
 	function getTransaction($request_id)
-  {
-    $sql = 'SELECT *
-        FROM `'._DB_PREFIX_.'vt_transaction`
-        WHERE `request_id` = \''.$request_id.'\'';
-    $result = Db::getInstance()->getRow($sql);
-    return $result; 
-  }
+	{
+		$sql = 'SELECT *
+			FROM `'._DB_PREFIX_.'vt_transaction`
+			WHERE `request_id` = \''.$request_id.'\'';
+		$result = Db::getInstance()->getRow($sql);
+		return $result; 
+	}
 
 	// determine the phone number to make Veritrans happy
 	function determineValidPhone($home_phone = '', $mobile_phone = '')
@@ -929,77 +948,80 @@ class VeritransPay extends PaymentModule
 		}
 	}
 
+	
 	public function execNotification()
 	{
-		$mailVars = array(
-		  '{merchant_id}' => Configuration::get('VT_MERCHANT_ID'),
-		  '{merchant_hash}' => nl2br(Configuration::get('VT_MERCHANT_HASH'))
-		);
+		// $mailVars = array(
+		//   '{merchant_id}' => Configuration::get('VT_MERCHANT_ID'),
+		//   '{merchant_hash}' => nl2br(Configuration::get('VT_MERCHANT_HASH'))
+		// );		
 
-		$veritrans_notification = new VeritransNotification();
+		Veritrans_Config::$serverKey = Configuration::get('VT_SERVER_KEY'); 
+		//$veritrans_notification = new VeritransNotification();
+		$veritrans_notification = new Veritrans_Notification(); //
+
 		$history = new OrderHistory();
 
 		/** Validating order*/
-		if (Configuration::get('VT_API_VERSION') == 2)
+		if ($veritrans_notification->isVerified())
 		{
-		  $history->id_order = (int)$veritrans_notification->order_id;
-
+		  	//$history->id_order = (int)$veritrans_notification->order_id;		  	
+			//error_log('notif verified');
+			if ($veritrans_notification->transaction_status == 'capture')				
+		    {
+		     	if ($veritrans_notification->fraud_status== 'accept')
+		     	{
+		       		$history->changeIdOrderState(Configuration::get('VT_PAYMENT_SUCCESS_STATUS_MAP'), (int)$veritrans_notification->order_id);
+		       		echo 'Valid success notification accepted.';
+		       	}
+		       	else if ($veritrans_notification->fraud_status== 'challenge')
+		     	{
+		       		$history->changeIdOrderState(Configuration::get('VT_PAYMENT_CHALLENGE_STATUS_MAP'), (int)$veritrans_notification->order_id);
+		       		echo 'Valid challenge notification accepted.';
+		     	} 
+		     } else
+		     {
+		       $history->changeIdOrderState(Configuration::get('VT_PAYMENT_FAILURE_STATUS_MAP'), (int)$veritrans_notification->order_id);
+		       echo 'Valid failure notification accepted';
+		     }
+		    
+		     $history->add(true);
+		     
+		  //   $history->add(true);
 		  // confirm back to Veritrans server
-		  $veritrans = new Veritrans();
-		  $veritrans->server_key = Configuration::get('VT_SERVER_KEY');
-		  $confirmation = $veritrans->confirm($veritrans_notification->order_id);
-		  
-		  if ($confirmation)
-		  {
-		    if ($confirmation['transaction_status'] == 'capture')
-		    {
-		      $history->changeIdOrderState(Configuration::get('VT_PAYMENT_SUCCESS_STATUS_MAP'), (int)$confirmation['order_id']);
-		      echo 'Valid success notification accepted.';
-		    } else if ($confirmation['transaction_status'] == 'challenge')
-		    {
-		      $history->changeIdOrderState(Configuration::get('VT_PAYMENT_CHALLENGE_STATUS_MAP'), (int)$confirmation['order_id']);
-		      echo 'Valid challenge notification accepted.';
-		    } else
-		    {
-		      $history->changeIdOrderState(Configuration::get('VT_PAYMENT_FAILURE_STATUS_MAP'), (int)$confirmation['order_id']);
-		      echo 'Valid failure notification accepted';
-		    }
-		    $history->add(true);
-		  } else
-		  {
-		  	echo 'There is an error contacting the Veritrans server when validating the notification.';
-		  }
+		  //coba_cek
+		  //$veritrans = new Veritrans();
+		  //coba_cek
+		  //$veritrans->server_key = Configuration::get('VT_SERVER_KEY');
+		  //coba_cek
+		  //$veritrans->confirm($veritrans_notification->order_id);
 
-		} else if (Configuration::get('VT_API_VERSION') == 1)
-		{
-		  $history->id_order = (int)$veritrans_notification->orderId; 
-		  $transaction = $this->getTransaction($veritrans_notification->orderId);
-		  $token_merchant = $transaction['token_merchant'];
+		  //$confirmation = Veritrans_Transaction::status($veritrans_notification->order_id);
 		  
-		  if ($veritrans_notification->status != 'fatal')
-		  {
-		    if($token_merchant == $veritrans_notification->TOKEN_MERCHANT)
-		    {
-		      if ($veritrans_notification->mStatus == 'success')
-		      { 
-		        $history->changeIdOrderState(Configuration::get('VT_PAYMENT_SUCCESS_STATUS_MAP'), (int)$veritrans_notification->orderId);
-		      }
-		      elseif ($veritrans_notification->mStatus == 'failure')
-		      {
-		        $history->changeIdOrderState(Configuration::get('VT_PAYMENT_FAILURE_STATUS_MAP'), (int)$veritrans_notification->orderId);
-		      }
-		      elseif ($veritrans_notification->mStatus == 'challenge')
-		      {
-		        $history->changeIdOrderState(Configuration::get('VT_PAYMENT_FAILURE_STATUS_MAP'), (int)$veritrans_notification->orderId);
-		      }
-		      $history->add(true);
-		    }
-		    else
-		    {
-		    	echo 'no transaction<br/>';
-		    }
-		  }
-		}
+		  //error_log(print_r($confirmation,true));
+
+		  //if ($confirmation)
+		  //{
+		  //  if ($confirmation['transaction_status'] == 'capture')
+		  //   {
+		  //     $history->changeIdOrderState(Configuration::get('VT_PAYMENT_SUCCESS_STATUS_MAP'), (int)$confirmation['order_id']);
+		  //     echo 'Valid success notification accepted.';
+		  //   } else if ($confirmation['transaction_status'] == 'challenge')
+		  //   {
+		  //     $history->changeIdOrderState(Configuration::get('VT_PAYMENT_CHALLENGE_STATUS_MAP'), (int)$confirmation['order_id']);
+		  //     echo 'Valid challenge notification accepted.';
+		  //   } else
+		  //   {
+		  //     $history->changeIdOrderState(Configuration::get('VT_PAYMENT_FAILURE_STATUS_MAP'), (int)$confirmation['order_id']);
+		  //     echo 'Valid failure notification accepted';
+		  //   }
+		  //   $history->add(true);
+		  // } else
+		  // {
+		  // 	echo 'There is an error contacting the Veritrans server when validating the notification.';
+		  // }
+		  
+		} 
 		exit;
 	}
 }

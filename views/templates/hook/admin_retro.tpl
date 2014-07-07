@@ -108,7 +108,18 @@
         <td><input type="checkbox" name="VT_3D_SECURE" {if $enable_3d_secure}checked{/if} style="width: 300px;" /></td>
       </tr>
       <!-- 3D_SECURE -->
+      
+      <tr>
+        <td width="300" style="vertical-align: top;">Enable 3D Secure?</td>
+        <td><input type="checkbox" name="ENABLED_CIMB" {if $enable_3d_secure}checked{/if} style="width: 300px;" /></td>
+      </tr>
+      <!-- Cimb enable payment -->
 
+       <tr>
+        <td width="300" style="vertical-align: top;">Enable 3D Secure?</td>
+        <td><input type="checkbox" name="ENABLED_MANDIRI" {if $enable_3d_secure}checked{/if} style="width: 300px;" /></td>
+      </tr>
+      <!-- mandiri payment -->
       <tr>
         <td width="300" style="vertical-align: top;">Kurs</td>
         <td><input type="text" name="VT_KURS" value="{$kurs}" style="width: 300px;" /></td>

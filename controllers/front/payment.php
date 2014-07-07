@@ -1,6 +1,6 @@
 <?php
 
-require_once(dirname(__FILE__).'/../../library/veritrans.php');
+require_once(dirname(__FILE__).'/../../library/veritrans/Veritrans.php');
 
 class VeritransPayPaymentModuleFrontController extends ModuleFrontController
 {
