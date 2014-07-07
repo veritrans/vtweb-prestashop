@@ -32,7 +32,7 @@ class VeritransPay extends PaymentModule
 	{
 		$this->name = 'veritranspay';
 		$this->tab = 'payments_gateways';
-		$this->version = '0.7';
+		$this->version = '0.8';
 		$this->author = 'Veritrans';
 		$this->bootstrap = true;
 		
@@ -937,11 +937,13 @@ class VeritransPay extends PaymentModule
 		);
 
 		$veritrans_notification = new VeritransNotification();
+		Logger::addLog("Veritrans: Receiving notification for Order ID [#{$veritrans_notification->order_id}]", 1);
 		$history = new OrderHistory();
 
 		/** Validating order*/
 		if (Configuration::get('VT_API_VERSION') == 2)
 		{
+			Logger::addLog("Veritrans v2: Begin verifying notification for Order ID [#{$veritrans_notification->order_id}]", 1);
 		  $history->id_order = (int)$veritrans_notification->order_id;
 
 		  // confirm back to Veritrans server
@@ -951,6 +953,7 @@ class VeritransPay extends PaymentModule
 		  
 		  if ($confirmation)
 		  {
+		  	Logger::addLog("Veritrans v2: Finish verifying notification for Order ID [#{$veritrans_notification->order_id}]", 1);
 		    if ($confirmation['transaction_status'] == 'capture')
 		    {
 		      $history->changeIdOrderState(Configuration::get('VT_PAYMENT_SUCCESS_STATUS_MAP'), (int)$confirmation['order_id']);
@@ -965,8 +968,10 @@ class VeritransPay extends PaymentModule
 		      echo 'Valid failure notification accepted';
 		    }
 		    $history->add(true);
+		    Logger::addLog("Veritrans v2: Saved new order state for Order ID [#{$veritrans_notification->order_id}]", 1);
 		  } else
 		  {
+		  	Logger::addLog("Veritrans v2: Failed to verify notification for Order ID [#{$veritrans_notification->order_id}]", 4);
 		  	echo 'There is an error contacting the Veritrans server when validating the notification.';
 		  }
 
