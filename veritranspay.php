@@ -32,7 +32,7 @@ class VeritransPay extends PaymentModule
 	{
 		$this->name = 'veritranspay';
 		$this->tab = 'payments_gateways';
-		$this->version = '0.8';
+		$this->version = '0.8.1';
 		$this->author = 'Veritrans';
 		$this->bootstrap = true;
 		
@@ -1005,6 +1005,5 @@ class VeritransPay extends PaymentModule
 		    }
 		  }
 		}
-		exit;
 	}
 }
