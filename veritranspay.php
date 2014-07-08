@@ -55,7 +55,8 @@ class VeritransPay extends PaymentModule
 			'VT_PAYMENT_CHALLENGE_STATUS_MAP',
 			'VT_ENVIRONMENT',
 			'ENABLED_CIMB',
-			'ENABLED_MANDIRI'
+			'ENABLED_MANDIRI',
+			'VT_SANITIZED'
 			);
 
 		foreach (array('BNI', 'MANDIRI', 'CIMB') as $bank) {
@@ -78,6 +79,9 @@ class VeritransPay extends PaymentModule
 			Configuration::set('VT_KURS', 10000);
 		
 		Configuration::set('VT_API_VERSION', 2);
+
+		if (!isset($config['VT_SANITIZED']))
+			Configuration::set('VT_SANITIZED', 0);	
 		if (!isset($config['ENABLED_CIMB']))
 			Configuration::set('ENABLED_CIMB', 0);		
 		if (!isset($config['ENABLED_MANDIRI']))
@@ -404,6 +408,25 @@ class VeritransPay extends PaymentModule
 							),
 						),
 					array(
+						'type' => 'radio',
+						'label' => 'Enable sanitized?',
+						'name' => 'VT_SANITIZED',
+						'required' => true,
+						'is_bool' => true,
+						'values' => array(
+							array(
+								'id' => 'sanitized_yes',
+								'value' => 1,
+								'label' => 'Yes'
+								),
+							array(
+								'id' => 'sanitized_no',
+								'value' => 0,
+								'label' => 'No'
+								)
+							),
+						),
+					array(
 						'type' => 'select',
 						'label' => 'Map payment SUCCESS status to:',
 						'name' => 'VT_PAYMENT_SUCCESS_STATUS_MAP',
@@ -495,6 +518,7 @@ class VeritransPay extends PaymentModule
 			'environments' => array(false => 'Development', true => 'Production'),
 			'environment' => htmlentities(Configuration::get('VT_ENVIRONMENT'), ENT_COMPAT, 'UTF-8'),
 			'enable_3d_secure' => htmlentities(Configuration::get('VT_3D_SECURE'), ENT_COMPAT, 'UTF-8'),
+			'enable_sanitized' => htmlentities(Configuration::get('VT_SANITIZED'), ENT_COMPAT, 'UTF-8'),
 			'enabled_cimb' => htmlentities(Configuration::get('ENABLED_CIMB'), ENT_COMPAT, 'UTF-8'),
 			'enabled_mandiri' => htmlentities(Configuration::get('ENABLED_MANDIRI'), ENT_COMPAT, 'UTF-8'),
 			'statuses' => $order_states,
@@ -747,6 +771,9 @@ class VeritransPay extends PaymentModule
     	if (Configuration::get('VT_3D_SECURE') == 'on' || Configuration::get('VT_3D_SECURE') == 1)
 			Veritrans_Config::$is3ds = true;		
 
+		if (Configuration::get('VT_SANITIZED') == 'on' || Configuration::get('VT_SANITIZED') == 1)
+			Veritrans_Config::$isSanitized = true;
+		
 		// Billing Address 
 		//coba_cek						
 		//$veritrans->address2 = $billing_address->address2;						
