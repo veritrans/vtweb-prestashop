@@ -495,7 +495,7 @@ class VeritransPay extends PaymentModule
 			'payment_types' => array('vtweb' => 'VT-Web', 'vtdirect' => 'VT-Direct'),
 			'client_key' => htmlentities(Configuration::get('VT_CLIENT_KEY'), ENT_COMPAT, 'UTF-8'),
 			'server_key' => htmlentities(Configuration::get('VT_SERVER_KEY'), ENT_COMPAT, 'UTF-8'),
-			'environments' => array(Veritrans_Config::ENVIRONMENT_DEVELOPMENT => 'Development', Veritrans_Config::ENVIRONMENT_PRODUCTION => 'Production'),
+			'environments' => array(false => 'Development', true => 'Production'),
 			'environment' => htmlentities(Configuration::get('VT_ENVIRONMENT'), ENT_COMPAT, 'UTF-8'),
 			'enable_3d_secure' => htmlentities(Configuration::get('VT_3D_SECURE'), ENT_COMPAT, 'UTF-8'),
 			'enabled_cimb' => htmlentities(Configuration::get('ENABLED_CIMB'), ENT_COMPAT, 'UTF-8'),

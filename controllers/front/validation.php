@@ -37,7 +37,7 @@ class VeritransPayValidationModuleFrontController extends ModuleFrontController
   //  	$usd = Configuration::get('VT_KURS');
   //   $cf = Configuration::get('VT_CONVENIENCE_FEE') * 0.01;
   //   $veritrans = new Veritrans();
-  //   $url = Veritrans::PAYMENT_REDIRECT_URL;
+  //   $url = Veritrans_Config::PAYMENT_REDIRECT_URL;
 
   //   $shipping_cost = $cart->getTotalShippingCost();
 
@@ -53,7 +53,7 @@ class VeritransPayValidationModuleFrontController extends ModuleFrontController
 
   //   $veritrans->version = Configuration::get('VT_API_VERSION');
   //   $veritrans->environment = Configuration::get('VT_ENVIRONMENT');
-  //   $veritrans->payment_type = Configuration::get('VT_PAYMENT_TYPE') == 'vtdirect' ? Veritrans::VT_DIRECT : Veritrans::VT_WEB;
+  //   $veritrans->payment_type = Configuration::get('VT_PAYMENT_TYPE') == 'vtdirect' ? Veritrans_Config::VT_DIRECT : Veritrans_Config::VT_WEB;
   //   $veritrans->merchant_id = Configuration::get('VT_MERCHANT_ID');
   //   $veritrans->merchant_hash_key = Configuration::get('VT_MERCHANT_HASH');
   //   $veritrans->client_key = Configuration::get('VT_CLIENT_KEY');
