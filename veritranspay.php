@@ -178,12 +178,9 @@ class VeritransPay extends PaymentModule
 	{
 		if (Tools::isSubmit('btnSubmit'))
 		{
-			error_log('masuk submit');
 			foreach ($this->config_keys as $key) {
-				error_log($key. ' - '.Tools::getValue($key));
 				Configuration::updateValue($key, Tools::getValue($key));
 			}
-			error_log('masuk submit ' . Configuration::get('ENABLED_MANDIRI'). ' '.Configuration::get('ENABLED_MANDIRI'));
 		}
 		$this->_html .= '<div class="alert alert-success conf confirm"> '.$this->l('Settings updated').'</div>';
 	}
@@ -202,7 +199,7 @@ class VeritransPay extends PaymentModule
 
 	private function _displayVeritransPayOld()
 	{
-		$this->_html .= '<img src="../modules/veritranspay/veritrans.jpg" style="float:left; margin-right:15px;"><b>'.$this->l('This module allows payment via veritrans.').'</b><br/><br/>
+		$this->_html .= '<img src="../modules/veritranspay/Veritrans.png" style="float:left; margin-right:15px;"><b>'.$this->l('This module allows payment via veritrans.').'</b><br/><br/>
 		'.$this->l('Payment via veritrans.').'<br /><br /><br />';
 	}
 
@@ -587,7 +584,8 @@ class VeritransPay extends PaymentModule
 			return;
 
 		$order = new Order(Tools::getValue('id_order'));
-		$history = $order->getHistory($this->context->cookie->id_lang);
+		$history = $order->getHistory($this->context->cookie->id_lang);	
+
 		$history = $history[0];
 
 		$this->context->smarty->assign(array(
@@ -598,9 +596,9 @@ class VeritransPay extends PaymentModule
 		));
 	
 		// 1.4 compatibility
-		error_log('order status');
-		error_log($history['id_order_state']);
-		error_log(Configuration::get('VT_PAYMENT_FAILURE_STATUS_MAP').' '.Configuration::get('VT_PAYMENT_CHALLENGE_STATUS_MAP').' '.Configuration::get('VT_PAYMENT_SUCCESS_STATUS_MAP'));
+		//error_log('order status');
+		//error_log($history['id_order_state']);
+		//error_log(Configuration::get('VT_PAYMENT_FAILURE_STATUS_MAP').' '.Configuration::get('VT_PAYMENT_CHALLENGE_STATUS_MAP').' '.Configuration::get('VT_PAYMENT_SUCCESS_STATUS_MAP'));
 
 		if (version_compare(Configuration::get('PS_VERSION_DB'), '1.5') == -1) {
 			return $this->display(__FILE__, 'views/templates/hook/order_confirmation.tpl');
@@ -856,10 +854,10 @@ class VeritransPay extends PaymentModule
 			try {
 			  // Redirect to Veritrans VTWeb page
 			  	$keys['redirect_url'] = Veritrans_Vtweb::getRedirectionUrl($params_all);
-			  	error_log($keys['redirect_url']);
+			  	//error_log($keys['redirect_url']);
 			}
 			catch (Exception $e) {
-				error_log('error disini');
+				//error_log('error disini');
 			  	$keys['errors'] = $e->getMessage();
 			}
 			return $keys;
@@ -961,7 +959,7 @@ class VeritransPay extends PaymentModule
 		$veritrans_notification = new Veritrans_Notification(); //
 
 		$history = new OrderHistory();
-
+		$history->id_order = (int)$veritrans_notification->order_id;
 		/** Validating order*/
 		if ($veritrans_notification->isVerified())
 		{
@@ -979,7 +977,10 @@ class VeritransPay extends PaymentModule
 		       		$history->changeIdOrderState(Configuration::get('VT_PAYMENT_CHALLENGE_STATUS_MAP'), (int)$veritrans_notification->order_id);
 		       		echo 'Valid challenge notification accepted.';
 		     	} 
-		     } else
+		     } else if ($veritrans_notification->transaction_status == 'settlement'){
+		     	$history->changeIdOrderState(Configuration::get('VT_PAYMENT_SUCCESS_STATUS_MAP'), (int)$veritrans_notification->order_id);
+		       	echo 'Valid success notification accepted.';
+		     }else
 		     {
 		       $history->changeIdOrderState(Configuration::get('VT_PAYMENT_FAILURE_STATUS_MAP'), (int)$veritrans_notification->order_id);
 		       echo 'Valid failure notification accepted';

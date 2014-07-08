@@ -8,7 +8,7 @@
 
 <h3>{l s='Payment via Veritrans.' mod='veritranspay'}</h3>
 <!-- <form action="{$link->getModuleLink('veritranspay', 'validation', [], true)}" method="post"> -->
-<img src="{$this_path}veritrans.jpg" alt="{l s='Your payment is error' mod='veritranspay'}" width="86" height="49" style="float:left; margin: 0px 10px 5px 0px;" />
+<img src="{$this_path}Veritrans.png" alt="{l s='Your payment is error' mod='veritranspay'}" width="86" height="49" style="float:left; margin: 0px 10px 5px 0px;" />
 
 {if $status == 'success'}
 	<p>
