@@ -111,7 +111,7 @@
       
       <tr>
         <td width="300" style="vertical-align: top;">Enable Sanitized?</td>
-        <td><input type="checkbox" name="VT_3D_SECURE" {if $enable_sanitized}checked{/if} style="width: 300px;" /></td>
+        <td><input type="checkbox" name="VT_SANITIZED" {if $enable_sanitized}checked{/if} style="width: 300px;" /></td>
       </tr>
       <!-- Sanitized -->
 

@@ -774,6 +774,8 @@ class VeritransPay extends PaymentModule
 		if (Configuration::get('VT_SANITIZED') == 'on' || Configuration::get('VT_SANITIZED') == 1)
 			Veritrans_Config::$isSanitized = true;
 		
+		error_log('sanitized '.Configuration::get('VT_SANITIZED'));
+
 		// Billing Address 
 		//coba_cek						
 		//$veritrans->address2 = $billing_address->address2;						
@@ -991,7 +993,7 @@ class VeritransPay extends PaymentModule
 		if ($veritrans_notification->isVerified())
 		{
 		  	//$history->id_order = (int)$veritrans_notification->order_id;		  	
-			//error_log('notif verified');
+			error_log('notif verified');
 			if ($veritrans_notification->transaction_status == 'capture')				
 		    {
 		     	if ($veritrans_notification->fraud_status== 'accept')
