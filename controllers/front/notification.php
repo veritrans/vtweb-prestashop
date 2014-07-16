@@ -1,6 +1,7 @@
 <?php 
 
-require_once(dirname(__FILE__).'/../../library/lib/veritrans_notification.php');
+require_once(dirname(__FILE__).'/../../library/veritrans/Veritrans/Notification.php');
+
 
 class VeritransPayNotificationModuleFrontController extends ModuleFrontController
 {
@@ -72,8 +73,10 @@ class VeritransPayNotificationModuleFrontController extends ModuleFrontControlle
     //   }
     // }
     // exit;
+    
     $veritransPay = new VeritransPay();
     $veritransPay->execNotification();
+    
   }
 
   function getTransaction($request_id)

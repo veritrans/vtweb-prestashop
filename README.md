@@ -7,11 +7,13 @@ Veritrans :heart: Prestashop!
 
 1. Download the plugin either from this repository or the Prestashop Extension.
 
-2. Go to your Prestashop administration page and go to **"Modules"** menu.
+2. Extract the modules, then rename the folder modules as **veritranspay** and zip this modules as **veritranspay.zip**
 
-3. Click on the **"Add a new module"** and locate the **veritranspay.zip** file, then upload it.
+3. Go to your Prestashop administration page and go to **"Modules"** menu.
 
-4. Find the **Veritrans Pay** module in the module list and install the module.
+4. Click on the **"Add a new module"** and locate the **veritranspay.zip** file, then upload it.
+
+5. Find the **Veritrans Pay** module in the module list and install the module.
 
 ## MAP Configuration
 

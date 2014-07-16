@@ -20,7 +20,7 @@
 			<form action="{$link->getModuleLink('veritranspay', 'validation', [], true)}" method="post" class="std"> 
 		{/if}
 			<p>
-				<img src="{$this_path}veritrans.jpg" alt="{l s='Veritrans' mod='veritranspay'}" height="49" style="float:left; margin: 0px 10px 5px 0px;" />
+				<img src="{$this_path}Veritrans.png" alt="{l s='Veritrans' mod='veritranspay'}" height="49" style="float:left; margin: 0px 10px 5px 0px;" />
 				<br/><b>{l s='You have chosen to pay via Veritrans.' mod='veritranspay'}</b><br/>
 			</p>
 

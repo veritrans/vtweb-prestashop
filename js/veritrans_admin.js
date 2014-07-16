@@ -1,6 +1,6 @@
 $(function() {
   function sensitiveOptions() {
-    var api_version = $('#veritransApiVersion').val();
+    var api_version = '2' ;//$('#veritransApiVersion').val();
     var payment_type = $('#veritransPaymentType').val();
     var api_string = 'v' + api_version + '_settings';
     var payment_type_string = payment_type;
