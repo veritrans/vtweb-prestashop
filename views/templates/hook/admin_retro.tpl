@@ -110,19 +110,19 @@
       <!-- 3D_SECURE -->
       
       <tr>
-        <td width="300" style="vertical-align: top;">Enable Sanitized?</td>
+        <td width="300" style="vertical-align: top;">Enable Sanitization?</td>
         <td><input type="checkbox" name="VT_SANITIZED" {if $enable_sanitized}checked{/if} style="width: 300px;" /></td>
       </tr>
       <!-- Sanitized -->
 
       <tr>
-        <td width="300" style="vertical-align: top;">Enable CIMB Payments?</td>
+        <td width="300" style="vertical-align: top;">Enable CIMB Clicks?</td>
         <td><input type="checkbox" name="ENABLED_CIMB" {if $enabled_cimb}checked{/if} style="width: 300px;" /></td>
       </tr>
       <!-- Cimb enable payment -->
 
        <tr>
-        <td width="300" style="vertical-align: top;">Enable Mandiri Payments?</td>
+        <td width="300" style="vertical-align: top;">Enable Mandiri ClickPay?</td>
         <td><input type="checkbox" name="ENABLED_MANDIRI" {if $enabled_mandiri}checked{/if} style="width: 300px;" /></td>
       </tr>      
       <!-- mandiri payment -->

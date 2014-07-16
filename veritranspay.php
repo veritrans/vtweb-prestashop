@@ -282,7 +282,7 @@ class VeritransPay extends PaymentModule
 						),
 					array(
 						'type' => 'radio',
-						'label' => 'Enable cimb click payment?',
+						'label' => 'Enable CIMB Clicks?',
 						'name' => 'ENABLED_CIMB',
 						'required' => true,
 						'is_bool' => true,
@@ -301,7 +301,7 @@ class VeritransPay extends PaymentModule
 						),
 					array(
 						'type' => 'radio',
-						'label' => 'Enable mandiri clickpay?',
+						'label' => 'Enable Mandiri ClickPay?',
 						'name' => 'ENABLED_MANDIRI',
 						'required' => true,
 						'is_bool' => true,
@@ -339,7 +339,7 @@ class VeritransPay extends PaymentModule
 						),
 					array(
 						'type' => 'radio',
-						'label' => 'Enable sanitized?',
+						'label' => 'Enable sanitization?',
 						'name' => 'VT_SANITIZED',
 						'required' => true,
 						'is_bool' => true,
@@ -808,6 +808,12 @@ class VeritransPay extends PaymentModule
 	{
 		
 		$products = $cart->getProducts();
+		$discount = -1 * $cart->getOrderTotal(true, Cart::ONLY_DISCOUNTS);
+
+		if (version_compare(Configuration::get('PS_VERSION_DB'), '1.5') == -1){ // for 1.4 version, voucher is negative
+			$discount *= -1;
+		}
+
 		$commodities = array();
 		$price = 0;
 
@@ -829,6 +835,15 @@ class VeritransPay extends PaymentModule
 			);			
 		}
 		
+		if($discount != 0){
+			$commodities[] = array(
+				"id" => 'DISCOUNT_VOUCHER',
+				"price" => $discount, // defer currency conversion until the very last time
+				"quantity" => '1',
+				"name" => 'discount from voucher',				
+			);	
+		}
+
 		return $commodities;
 	}
 
