@@ -60,11 +60,7 @@
 				<div class="form-group">
 					<label for="">CVV</label>
 					<input type="text" class="form-control">
-				</div>		
-			{else}
-				<input type="hidden" size="30" name="MERCHANT_ID" value="{$merchant_id}" />
-				<input type="hidden" name="ORDER_ID" value="{$order_id}" />
-				<input type="hidden" size="70" name="TOKEN_BROWSER" value="{$token_browser}" />
+				</div>					
 			{/if}
 
 			<h3 class="page-subheading">Confirm Order</h3>
