@@ -266,7 +266,7 @@ class VeritransPay extends PaymentModule
 						),
 					array(
 						'type' => 'text',
-						'label' => 'VT-Direct Client Key',
+						'label' => 'Client Key',
 						'name' => 'VT_CLIENT_KEY',
 						'required' => true,
 						'desc' => 'Consult to your Merchant Administration Portal for the value of this field.',
@@ -274,7 +274,7 @@ class VeritransPay extends PaymentModule
 						),
 					array(
 						'type' => 'text',
-						'label' => 'VT-Direct Server Key',
+						'label' => 'Server Key',
 						'name' => 'VT_SERVER_KEY',
 						'required' => true,
 						'desc' => 'Consult to your Merchant Administration Portal for the value of this field.',
