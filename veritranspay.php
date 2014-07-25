@@ -620,6 +620,7 @@ class VeritransPay extends PaymentModule
 	}
 
 	// Retrocompatibility 1.4
+	//validation and 
 	public function execValidation($cart)
 	{
 		global $cookie;
@@ -886,7 +887,7 @@ class VeritransPay extends PaymentModule
 		}
 	}
 
-	
+	//this function exec when notification sent from MAP
 	public function execNotification()
 	{
 		
@@ -900,29 +901,31 @@ class VeritransPay extends PaymentModule
 		{
 		  	//$history->id_order = (int)$veritrans_notification->order_id;		  	
 			error_log('notif verified');
+			error_log('message notif: '.(int)$veritrans_notification->order_id);
+			$order_id_notif = (int)$veritrans_notification->order_id;
 			if ($veritrans_notification->transaction_status == 'capture')				
 		    {
 		     	if ($veritrans_notification->fraud_status== 'accept')
 		     	{
-		       		$history->changeIdOrderState(Configuration::get('VT_PAYMENT_SUCCESS_STATUS_MAP'), (int)$veritrans_notification->order_id);
+		       		$history->changeIdOrderState(Configuration::get('VT_PAYMENT_SUCCESS_STATUS_MAP'), $order_id_notif);
 		       		echo 'Valid success notification accepted.';
 		       	}
 		       	else if ($veritrans_notification->fraud_status== 'challenge')
 		     	{
-		       		$history->changeIdOrderState(Configuration::get('VT_PAYMENT_CHALLENGE_STATUS_MAP'), (int)$veritrans_notification->order_id);
+		       		$history->changeIdOrderState(Configuration::get('VT_PAYMENT_CHALLENGE_STATUS_MAP'), $order_id_notif);
 		       		echo 'Valid challenge notification accepted.';
 		     	} 
 		     } else if ($veritrans_notification->transaction_status == 'settlement'){
-		     	$history->changeIdOrderState(Configuration::get('VT_PAYMENT_SUCCESS_STATUS_MAP'), (int)$veritrans_notification->order_id);
+		     	$history->changeIdOrderState(Configuration::get('VT_PAYMENT_SUCCESS_STATUS_MAP'), $order_id_notif);
 		       	echo 'Valid success notification accepted.';
 		     }else
 		     {
-		       $history->changeIdOrderState(Configuration::get('VT_PAYMENT_FAILURE_STATUS_MAP'), (int)$veritrans_notification->order_id);
+		       $history->changeIdOrderState(Configuration::get('VT_PAYMENT_FAILURE_STATUS_MAP'), $order_id_notif);
 		       echo 'Valid failure notification accepted';
 		     }
 		    
 		     $history->add(true);		     			  
-		} 
+		}
 		exit;
 	}
 }
