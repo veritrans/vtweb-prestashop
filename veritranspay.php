@@ -1058,10 +1058,10 @@ class VeritransPay extends PaymentModule
 						$att_trim = ltrim($att);						
 						$att_arr = explode(' ',$att_trim);
 						error_log(print_r($att_arr,true));
-						if($att_arr[0] == 'installment'){
+						if(strtolower($att_arr[0]) == 'installment'){
 							$fullPayment = false;
 							$param_installment = array();
-							$param_installment[$att_arr[1]] = array($att_arr[2]);
+							$param_installment[strtolower($att_arr[1])] = array($att_arr[2]);
 						} 						
 					}
 				} else {
