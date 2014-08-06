@@ -2,39 +2,39 @@
 
 class VeritransPayValidationModuleFrontController extends ModuleFrontController
 {
-	public $display_header = false;
-	public $display_footer = false;
-	public $display_column_left = false;
-	public $display_column_right = false;
+  public $display_header = false;
+  public $display_footer = false;
+  public $display_column_left = false;
+  public $display_column_right = false;
 
-	/**
-	 * @see FrontController::postProcess()
-	 */
-	public function postProcess()
-	{	
+  /**
+   * @see FrontController::postProcess()
+   */
+  public function postProcess()
+  { 
     $cart = $this->context->cart;
     $veritranspay = new VeritransPay();
     $keys = $veritranspay->execValidation($cart);
 
     // if ($cart->id_customer == 0 || $cart->id_address_delivery == 0 || $cart->id_address_invoice == 0 || !$this->module->active)
-		// 	Tools::redirect('index.php?controller=order&step=1');
+    //  Tools::redirect('index.php?controller=order&step=1');
 
-		// // Check that this payment option is still available in case the customer changed his address just before the end of the checkout process
-		// $authorized = false;
-		// foreach (Module::getPaymentModules() as $module)
-		// 	if ($module['name'] == 'veritranspay')
-		// 	{
-		// 		$authorized = true;
-		// 		break;
-		// 	}
-		// if (!$authorized)
-		// 	die($this->module->l('This payment method is not available.', 'validation'));
+    // // Check that this payment option is still available in case the customer changed his address just before the end of the checkout process
+    // $authorized = false;
+    // foreach (Module::getPaymentModules() as $module)
+    //  if ($module['name'] == 'veritranspay')
+    //  {
+    //    $authorized = true;
+    //    break;
+    //  }
+    // if (!$authorized)
+    //  die($this->module->l('This payment method is not available.', 'validation'));
 
-		// $customer = new Customer($cart->id_customer);
+    // $customer = new Customer($cart->id_customer);
   //   if (!Validate::isLoadedObject($customer))
   //    Tools::redirect('index.php?controller=order&step=1');
 
-  //  	$usd = Configuration::get('VT_KURS');
+  //    $usd = Configuration::get('VT_KURS');
   //   $cf = Configuration::get('VT_CONVENIENCE_FEE') * 0.01;
   //   $veritrans = new Veritrans();
   //   $url = Veritrans_Config::PAYMENT_REDIRECT_URL;
@@ -130,6 +130,11 @@ class VeritransPayValidationModuleFrontController extends ModuleFrontController
   }
   if ($veritrans_api_version == 2 && $veritrans_payment_method == 'vtweb')
   {
+      if ($keys['isWarning']){
+          error_log('error bro, fullpayment ajah!');
+
+          Tools::redirectLink('index.php?fc=module&module=veritranspay&controller=warning&redirlink='.$keys['redirect_url'].'&message='.$keys['message']);
+      }      
       Tools::redirectLink($keys['redirect_url']);
   } else if ($veritrans_api_version == 2 && $veritrans_payment_method == 'vtdirect')
   {
@@ -137,83 +142,83 @@ class VeritransPayValidationModuleFrontController extends ModuleFrontController
   }
   }
 
-	public function setMedia()
-	{
-		Tools::addJs('function onloadEvent() { document.form_auto_post.submit(); }');
-	}
+  public function setMedia()
+  {
+    Tools::addJs('function onloadEvent() { document.form_auto_post.submit(); }');
+  }
 
-	public function addCommodities($cart, $shipping_cost, $usd)
-	{
-		
-		$products = $cart->getProducts();
-		$commodities = array();
-		$price = 0;
+  public function addCommodities($cart, $shipping_cost, $usd)
+  {
+    
+    $products = $cart->getProducts();
+    $commodities = array();
+    $price = 0;
 
-		foreach ($products as $aProduct) {
-			$commodities[] = array(
-				"item_id" => $aProduct['id_product'],
-				// "price" =>  number_format($aProduct['price_wt']*$usd, 0, '', ''),
-				"price" =>  $aProduct['price_wt'],
-				"quantity" => $aProduct['cart_quantity'],
-				"item_name1" => $aProduct['name'],
-				"item_name2" => $aProduct['name']
-			);
-		}
+    foreach ($products as $aProduct) {
+      $commodities[] = array(
+        "item_id" => $aProduct['id_product'],
+        // "price" =>  number_format($aProduct['price_wt']*$usd, 0, '', ''),
+        "price" =>  $aProduct['price_wt'],
+        "quantity" => $aProduct['cart_quantity'],
+        "item_name1" => $aProduct['name'],
+        "item_name2" => $aProduct['name']
+      );
+    }
 
-		if($shipping_cost != 0){
-			$commodities[] = array(
-				"item_id" => 'SHIPPING_FEE',
-				// "COMMODITY_PRICE" => $shipping_cost*$usd,
-				"price" => $shipping_cost, // defer currency conversion until the very last time
-				"quantity" => '1',
-				"item_name1" => 'Shipping Cost',
-				"item_name2" => 'Biaya Pengiriman'
-			);			
-		}
-		
-		// convenience fee is disabled for the time being...
-		// if($convenience_fee!=0){
-		// 	$commodities[] = array(
-		// 		"COMMODITY_ID" => '00',
-		// 		"COMMODITY_PRICE" => $convenience_fee,
-		// 		"COMMODITY_QTY" => '1',
-		// 		"COMMODITY_NAME1" => 'Convenience Fee',
-		// 		"COMMODITY_NAME2" => 'Convenience Fee'
-		// 	);
-		// }
-			
-		return $commodities;
-	}
+    if($shipping_cost != 0){
+      $commodities[] = array(
+        "item_id" => 'SHIPPING_FEE',
+        // "COMMODITY_PRICE" => $shipping_cost*$usd,
+        "price" => $shipping_cost, // defer currency conversion until the very last time
+        "quantity" => '1',
+        "item_name1" => 'Shipping Cost',
+        "item_name2" => 'Biaya Pengiriman'
+      );      
+    }
+    
+    // convenience fee is disabled for the time being...
+    // if($convenience_fee!=0){
+    //  $commodities[] = array(
+    //    "COMMODITY_ID" => '00',
+    //    "COMMODITY_PRICE" => $convenience_fee,
+    //    "COMMODITY_QTY" => '1',
+    //    "COMMODITY_NAME1" => 'Convenience Fee',
+    //    "COMMODITY_NAME2" => 'Convenience Fee'
+    //  );
+    // }
+      
+    return $commodities;
+  }
 
-	function insertTransaction($customer_id, $id_cart, $id_currency, $request_id, $token_merchant)
-	{
-		$sql = 'INSERT INTO `'._DB_PREFIX_.'vt_transaction`
-				(`id_customer`, `id_cart`, `id_currency`, `request_id`, `token_merchant`)
-				VALUES ('.(int)$customer_id.',
-					'.(int)$id_cart.',
-					'.(int)$id_currency.',
-						\''.$request_id.'\',
-						\''.$token_merchant.'\')';
-		Db::getInstance()->Execute($sql);
-	}
+  function insertTransaction($customer_id, $id_cart, $id_currency, $request_id, $token_merchant)
+  {
+    $sql = 'INSERT INTO `'._DB_PREFIX_.'vt_transaction`
+        (`id_customer`, `id_cart`, `id_currency`, `request_id`, `token_merchant`)
+        VALUES ('.(int)$customer_id.',
+          '.(int)$id_cart.',
+          '.(int)$id_currency.',
+            \''.$request_id.'\',
+            \''.$token_merchant.'\')';
+    Db::getInstance()->Execute($sql);
+  }
 
-	// function getTransaction($request_id)
-	// {
-	// 	$sql = 'SELECT *
-	// 			FROM `'._DB_PREFIX_.'vt_transaction`
-	// 			WHERE `request_id` = \''.$request_id.'\'';
-	// 	$result = Db::getInstance()->getRow($sql);
-	// 	return $result;	
-	// }
+  // function getTransaction($request_id)
+  // {
+  //  $sql = 'SELECT *
+  //      FROM `'._DB_PREFIX_.'vt_transaction`
+  //      WHERE `request_id` = \''.$request_id.'\'';
+  //  $result = Db::getInstance()->getRow($sql);
+  //  return $result; 
+  // }
 
-	// function validate($id_transaction, $id_order, $order_status)
- //  	{
- //  		$sql = 'INSERT INTO `'._DB_PREFIX_.'vt_validation`
- //  				(`id_order`, `id_transaction`, `order_status`)
- //  				VALUES ('.(int)$id_transaction.',
- //  						'.(int)$id_order.',
- //  						\''.$order_status.'\')';
-	// 	Db::getInstance()->Execute($sql);
- //  	}
+  // function validate($id_transaction, $id_order, $order_status)
+ //   {
+ //     $sql = 'INSERT INTO `'._DB_PREFIX_.'vt_validation`
+ //         (`id_order`, `id_transaction`, `order_status`)
+ //         VALUES ('.(int)$id_transaction.',
+ //             '.(int)$id_order.',
+ //             \''.$order_status.'\')';
+  //  Db::getInstance()->Execute($sql);
+ //   }
 }
 
