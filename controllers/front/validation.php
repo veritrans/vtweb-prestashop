@@ -130,8 +130,7 @@ class VeritransPayValidationModuleFrontController extends ModuleFrontController
   }
   if ($veritrans_api_version == 2 && $veritrans_payment_method == 'vtweb')
   {
-      if ($keys['isWarning']){
-          error_log('error bro, fullpayment ajah!');
+      if ($keys['isWarning']){          
 
           Tools::redirectLink('index.php?fc=module&module=veritranspay&controller=warning&redirlink='.$keys['redirect_url'].'&message='.$keys['message']);
       }      

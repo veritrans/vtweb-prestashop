@@ -229,8 +229,8 @@ class VeritransPay extends PaymentModule
 		foreach ($this->config_keys as $key) {
 			$result[$key] = Tools::getValue($key, Configuration::get($key));
 		}
-		error_log('message fields_value');
-		error_log(print_r($result,true));
+		//error_log('message fields_value');
+		//error_log(print_r($result,true));
 		return $result;
 	}
 
@@ -855,7 +855,7 @@ class VeritransPay extends PaymentModule
 		foreach ($this->config_keys as $key) {
 			if ( (strpos($key, 'VT_INSTALLMENTS_' . $name_bank ) !== FALSE) && (Configuration::get($key) == 'on') ){
 				$key_array = explode('_', $key);
-				error_log(print_r($key_array,true));
+				//error_log(print_r($key_array,true));
 				$ans[] = $key_array[3];
 			}
     		
@@ -1027,8 +1027,7 @@ class VeritransPay extends PaymentModule
 		switch ($installment_type_val) {
 			case 'all_product':
 								
-				if ($isBniInstallment){
-					error_log('');
+				if ($isBniInstallment){					
 					$bni_term = $this->getTermInstallment('BNI');
 				}					
 							
@@ -1057,7 +1056,7 @@ class VeritransPay extends PaymentModule
 					foreach($attr_product as $att){
 						$att_trim = ltrim($att);						
 						$att_arr = explode(' ',$att_trim);
-						error_log(print_r($att_arr,true));
+						//error_log(print_r($att_arr,true));
 						if(strtolower($att_arr[0]) == 'installment'){
 							$fullPayment = false;
 							$param_installment = array();
@@ -1106,8 +1105,7 @@ class VeritransPay extends PaymentModule
 
 			$params_all['vtweb']['payment_options'] = $param_payment_option;		
 		}
-
-		error_log(print_r($params_all,true));
+		
 
 		if (Configuration::get('VT_API_VERSION') == 2 && Configuration::get('VT_PAYMENT_TYPE') != 'vtdirect') //transaksi https://github.com/veritrans/veritrans-php/blob/vtweb-2/examples/v2/vt_web/checkout_process.php line 77
 		{						
@@ -1156,8 +1154,8 @@ class VeritransPay extends PaymentModule
 		$price = 0;
 
 		foreach ($products as $aProduct) {
-			error_log('detail product');
-			error_log(print_r($aProduct,true));
+			//error_log('detail product');
+			//error_log(print_r($aProduct,true));
 			$commodities[] = array(
 				"id" => $aProduct['id_product'],
 				"price" =>  $aProduct['price_wt'],
@@ -1239,8 +1237,8 @@ class VeritransPay extends PaymentModule
 		if ($veritrans_notification->isVerified())
 		{
 		  	//$history->id_order = (int)$veritrans_notification->order_id;		  	
-			error_log('notif verified');
-			error_log('message notif: '.(int)$veritrans_notification->order_id);
+			//error_log('notif verified');
+			//error_log('message notif: '.(int)$veritrans_notification->order_id);
 			$order_id_notif = (int)$veritrans_notification->order_id;
 			if ($veritrans_notification->transaction_status == 'capture')				
 		    {
