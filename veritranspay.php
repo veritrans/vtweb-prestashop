@@ -33,7 +33,7 @@ class VeritransPay extends PaymentModule
 	{
 		$this->name = 'veritranspay';
 		$this->tab = 'payments_gateways';
-		$this->version = '0.7';
+		$this->version = '1.0';
 		$this->author = 'Veritrans';
 		$this->bootstrap = true;
 		
@@ -56,8 +56,17 @@ class VeritransPay extends PaymentModule
 			'VT_ENVIRONMENT',
 			'ENABLED_CIMB',
 			'ENABLED_MANDIRI',
-			'VT_SANITIZED'
+			'VT_SANITIZED',
+			'VT_ENABLE_INSTALLMENT',
+			'ENABLED_BNI_INSTALLMENT',
+			'ENABLED_MANDIRI_INSTALLMENT'
 			);
+
+		foreach (array('BNI', 'MANDIRI') as $bank) {
+			foreach (array(3, 6, 9, 12, 18, 24) as $months) {
+				array_push($this->config_keys, 'VT_INSTALLMENTS_' . $bank . '_' . $months);
+			}
+		}
 
 		$config = Configuration::getMultiple($this->config_keys);
 
@@ -220,6 +229,8 @@ class VeritransPay extends PaymentModule
 		foreach ($this->config_keys as $key) {
 			$result[$key] = Tools::getValue($key, Configuration::get($key));
 		}
+		//error_log('message fields_value');
+		//error_log(print_r($result,true));
 		return $result;
 	}
 
@@ -234,6 +245,17 @@ class VeritransPay extends PaymentModule
 				)
 			);
 		}
+		
+		$installments_options = array();
+		foreach (array('BNI', 'MANDIRI') as $bank) {
+			$installments_options[$bank] = array();
+			foreach (array(3, 6, 9, 12, 18, 24) as $months) {
+				array_push($installments_options[$bank], array(
+					'id_option' => $bank . '_' . $months,
+					'name' => $months . ' Months'
+					));
+			}
+		}
 
 		$environments = array(
 			array(
@@ -245,6 +267,22 @@ class VeritransPay extends PaymentModule
 				'name' => 'Production'
 				)
 			);
+
+		$installment_type = array(
+			array(
+				'id_option' => 'all_product',
+				'name' => 'All Products'
+				),
+			array(
+				'id_option' => 'certain_product',
+				'name' => 'Certain Product'
+				),
+			array(
+				'id_option' => 'off',
+				'name' => 'Off'
+				)
+			);
+
 		$fields_form = array(
 			'form' => array(
 				'legend' => array(
@@ -266,7 +304,7 @@ class VeritransPay extends PaymentModule
 						),
 					array(
 						'type' => 'text',
-						'label' => 'Client Key',
+						'label' => 'VT-Direct Client Key',
 						'name' => 'VT_CLIENT_KEY',
 						'required' => true,
 						'desc' => 'Consult to your Merchant Administration Portal for the value of this field.',
@@ -274,56 +312,16 @@ class VeritransPay extends PaymentModule
 						),
 					array(
 						'type' => 'text',
-						'label' => 'Server Key',
+						'label' => 'VT-Direct Server Key',
 						'name' => 'VT_SERVER_KEY',
 						'required' => true,
 						'desc' => 'Consult to your Merchant Administration Portal for the value of this field.',
 						'class' => 'v1_vtdirect_settings v2_settings sensitive'
 						),
 					array(
-						'type' => 'radio',
-						'label' => 'Enable CIMB Clicks?',
-						'name' => 'ENABLED_CIMB',
-						'required' => true,
-						'is_bool' => true,
-						'values' => array(
-							array(
-								'id' => 'cimb_yes',
-								'value' => 1,
-								'label' => 'Yes'
-								),
-							array(
-								'id' => 'cimb_no',
-								'value' => 0,
-								'label' => 'No'
-								)
-							),
-						),
-					array(
-						'type' => 'radio',
-						'label' => 'Enable Mandiri ClickPay?',
-						'name' => 'ENABLED_MANDIRI',
-						'required' => true,
-						'is_bool' => true,
-						'values' => array(
-							array(
-								'id' => 'mandiri_yes',
-								'value' => 1,
-								'label' => 'Yes'
-								),
-							array(
-								'id' => 'mandiri_no',
-								'value' => 0,
-								'label' => 'No'
-								)
-							),
-						),
-					array(
-						'type' => 'radio',
-						'label' => 'Enable 3D Secure?',
-						'name' => 'VT_3D_SECURE',
-						'required' => true,
-						'is_bool' => true,
+						'type' => 'switch',
+						'label' => '3D Secure',
+						'name' => 'VT_3D_SECURE',						
 						'values' => array(
 							array(
 								'id' => '3d_secure_yes',
@@ -336,12 +334,12 @@ class VeritransPay extends PaymentModule
 								'label' => 'No'
 								)
 							),
+						//'class' => ''
 						),
 					array(
-						'type' => 'radio',
-						'label' => 'Enable sanitization?',
-						'name' => 'VT_SANITIZED',
-						'required' => true,
+						'type' => 'switch',
+						'label' => 'Enable sanitization',
+						'name' => 'VT_SANITIZED',						
 						'is_bool' => true,
 						'values' => array(
 							array(
@@ -355,6 +353,118 @@ class VeritransPay extends PaymentModule
 								'label' => 'No'
 								)
 							),
+						//'class' => ''
+						),
+					array(
+						'type' => 'switch',
+						'label' => 'CIMB Clicks',
+						'name' => 'ENABLED_CIMB',						
+						'is_bool' => true,
+						'values' => array(
+							array(
+								'id' => 'cimb_yes',
+								'value' => 1,
+								'label' => 'Yes'
+								),
+							array(
+								'id' => 'cimb_no',
+								'value' => 0,
+								'label' => 'No'
+								)
+							),
+						//'class' => ''
+						),
+					array(
+						'type' => 'switch',
+						'label' => 'Mandiri ClickPay',
+						'name' => 'ENABLED_MANDIRI',						
+						'is_bool' => true,
+						'values' => array(
+							array(
+								'id' => 'mandiri_yes',
+								'value' => 1,
+								'label' => 'Yes'
+								),
+							array(
+								'id' => 'mandiri_no',
+								'value' => 0,
+								'label' => 'No'
+								)
+							),
+						//'class' => ''
+						),
+					array(
+						'type' => 'select',
+						'label' => 'Enable Installments',
+						'name' => 'VT_ENABLE_INSTALLMENT',						
+						'options' => array(
+							'query' => $installment_type,
+							'id' => 'id_option',
+							'name' => 'name'
+							),
+						//'class' => ''
+						),
+					array(
+						'type' => 'switch',
+						'label' => 'BNI Installment',
+						'name' => 'ENABLED_BNI_INSTALLMENT',						
+						//'is_bool' => true,
+						'values' => array(
+							array(
+								'id' => 'bni_installment_yes',
+								'value' => 1,
+								'label' => 'Yes'
+								),
+							array(
+								'id' => 'bni_installment_no',
+								'value' => 0,
+								'label' => 'No'
+								)
+							),
+						//'class' => 'ENABLED_BNI_INSTALLMENT'
+						),
+					array(
+						'type' => 'checkbox',
+						'label' => 'Enable BNI Installments?',
+						'name' => 'VT_INSTALLMENTS',
+						'values' => array(
+							'query' => $installments_options['BNI'],
+							'id' => 'id_option',
+							'name' => 'name'
+							),
+						//'class' => 'v1_vtweb_settings sensitive'\
+						'class' => 'VT_INSTALLMENTS_BNI'	
+						),
+					array(
+						'type' => 'switch',
+						'label' => 'MANDIRI Installment',
+						'name' => 'ENABLED_MANDIRI_INSTALLMENT',						
+						'is_bool' => true,
+						'values' => array(
+							array(
+								'id' => 'mandiri_installment_yes',
+								'value' => 1,
+								'label' => 'Yes'
+								),
+							array(
+								'id' => 'mandiri_installment_no',
+								'value' => 0,
+								'label' => 'No'
+								)
+							),
+						//'class' => 'ENABLED_MANDIRI_INSTALLMENT'
+						),							
+					array(
+						'type' => 'checkbox',
+						'label' => 'Enable Mandiri Installments?',
+						'name' => 'VT_INSTALLMENTS',
+						'values' => array(
+							'query' => $installments_options['MANDIRI'],
+							'id' => 'id_option',
+							'name' => 'name'
+							),
+						//'class' => 'v1_vtweb_settings sensitive'
+						'class' => 'VT_INSTALLMENTS_MANDIRI'
 						),
 					array(
 						'type' => 'select',
@@ -366,7 +476,7 @@ class VeritransPay extends PaymentModule
 							'id' => 'id_option',
 							'name' => 'name'
 							),
-						'class' => ''
+						//'class' => ''
 						),
 					array(
 						'type' => 'select',
@@ -378,7 +488,7 @@ class VeritransPay extends PaymentModule
 							'id' => 'id_option',
 							'name' => 'name'
 							),
-						'class' => ''
+						//'class' => ''
 						),
 					array(
 						'type' => 'select',
@@ -390,7 +500,7 @@ class VeritransPay extends PaymentModule
 							'id' => 'id_option',
 							'name' => 'name'
 							),
-						'class' => ''
+						//'class' => ''
 						),
 					array(
 						'type' => 'text',
@@ -404,6 +514,123 @@ class VeritransPay extends PaymentModule
 					)
 				)
 			);
+		// $fields_payment_form = array(
+		// 	'form' => array(
+		// 		'legend' => array(
+		// 			'title' => 'Payment Configuration',
+		// 			'icon' => 'icon-cogs'
+		// 			),
+		// 		'input' => array(					
+		// 			array(
+		// 				'type' => 'switch',
+		// 				'label' => 'CIMB Clicks',
+		// 				'name' => 'ENABLED_CIMB',						
+		// 				'is_bool' => true,
+		// 				'values' => array(
+		// 					array(
+		// 						'id' => 'cimb_yes',
+		// 						'value' => 1,
+		// 						'label' => 'Yes'
+		// 						),
+		// 					array(
+		// 						'id' => 'cimb_no',
+		// 						'value' => 0,
+		// 						'label' => 'No'
+		// 						)
+		// 					),						
+		// 				),
+		// 			array(
+		// 				'type' => 'switch',
+		// 				'label' => 'Mandiri ClickPay',
+		// 				'name' => 'ENABLED_MANDIRI',						
+		// 				'is_bool' => true,
+		// 				'values' => array(
+		// 					array(
+		// 						'id' => 'mandiri_yes',
+		// 						'value' => 1,
+		// 						'label' => 'Yes'
+		// 						),
+		// 					array(
+		// 						'id' => 'mandiri_no',
+		// 						'value' => 0,
+		// 						'label' => 'No'
+		// 						)
+		// 					),						
+		// 				),
+		// 			array(
+		// 				'type' => 'select',
+		// 				'label' => 'Enable Installments',
+		// 				'name' => 'VT_ENABLE_INSTALLMENT',						
+		// 				'options' => array(
+		// 					'query' => $installment_type,
+		// 					'id' => 'id_option',
+		// 					'name' => 'name'
+		// 					),
+		// 				),
+		// 			array(
+		// 				'type' => 'switch',
+		// 				'label' => 'BNI Installment',
+		// 				'name' => 'ENABLED_BNI_INSTALLMENT',						
+		// 				//'is_bool' => true,
+		// 				'values' => array(
+		// 					array(
+		// 						'id' => 'bni_installment_yes',
+		// 						'value' => 1,
+		// 						'label' => 'Yes'
+		// 						),
+		// 					array(
+		// 						'id' => 'bni_installment_no',
+		// 						'value' => 0,
+		// 						'label' => 'No'
+		// 						)
+		// 					),
+		// 				),
+		// 			array(
+		// 				'type' => 'checkbox',
+		// 				'label' => 'Enable BNI Installments?',
+		// 				'name' => 'VT_INSTALLMENTS',
+		// 				'values' => array(
+		// 					'query' => $installments_options['BNI'],
+		// 					'id' => 'id_option',
+		// 					'name' => 'name'
+		// 					),
+		// 				'class' => 'VT_INSTALLMENTS_BNI'	
+		// 				),
+		// 			array(
+		// 				'type' => 'switch',
+		// 				'label' => 'MANDIRI Installment',
+		// 				'name' => 'ENABLED_MANDIRI_INSTALLMENT',						
+		// 				'is_bool' => true,
+		// 				'values' => array(
+		// 					array(
+		// 						'id' => 'mandiri_installment_yes',
+		// 						'value' => 1,
+		// 						'label' => 'Yes'
+		// 						),
+		// 					array(
+		// 						'id' => 'mandiri_installment_no',
+		// 						'value' => 0,
+		// 						'label' => 'No'
+		// 						)
+		// 					),
+		// 				),							
+		// 			array(
+		// 				'type' => 'checkbox',
+		// 				'label' => 'Enable Mandiri Installments?',
+		// 				'name' => 'VT_INSTALLMENTS',
+		// 				'values' => array(
+		// 					'query' => $installments_options['MANDIRI'],
+		// 					'id' => 'id_option',
+		// 					'name' => 'name'
+		// 					),
+		// 				'class' => 'VT_INSTALLMENTS_MANDIRI'
+		// 				),					
+		// 			),
+		// 		'submit' => array(
+		// 			'title' => $this->l('Save'),
+		// 			)
+		// 		)
+		// 	);
 
 		$helper = new HelperForm();
 		$helper->show_toolbar = false;
@@ -423,7 +650,10 @@ class VeritransPay extends PaymentModule
 			'id_language' => $this->context->language->id
 		);
 
+
+
 		$this->_html .= $helper->generateForm(array($fields_form));
+		//$this->_html .= $helper->generateForm(array($fields_payment_form));
 	}
 
 	private function _displayFormOld()
@@ -494,6 +724,7 @@ class VeritransPay extends PaymentModule
 	// working in 1.5 and 1.6
 	public function hookDisplayBackOfficeHeader($params)
 	{
+		$this->context->controller->addJquery();
 		$this->context->controller->addJS($this->_path . 'js/veritrans_admin.js', 'all');
 	}
 
@@ -619,8 +850,30 @@ class VeritransPay extends PaymentModule
 		return $this->display(__FILE__, 'views/templates/front/payment_execution.tpl');
 	}
 
+	public function getTermInstallment($name_bank){
+		$ans = array();
+		foreach ($this->config_keys as $key) {
+			if ( (strpos($key, 'VT_INSTALLMENTS_' . $name_bank ) !== FALSE) && (Configuration::get($key) == 'on') ){
+				$key_array = explode('_', $key);
+				//error_log(print_r($key_array,true));
+				$ans[] = $key_array[3];
+			}
+    		
+		}
+		return $ans;
+	}
+
+	public function isInstallmentCart($products){		
+		foreach($products as $prod){
+			$str_attr = $prod['attributes_small'];
+			if (strpos($str_attr, 'installment') !== FALSE){				
+				return true;
+			}    
+		}		
+		return false;
+	}
+
 	// Retrocompatibility 1.4
-	//validation and 
 	public function execValidation($cart)
 	{
 		global $cookie;
@@ -655,6 +908,7 @@ class VeritransPay extends PaymentModule
 			$list_enable_payments[] = "mandiri_clickpay";
 		}
 		
+
 		$veritrans = new Veritrans_Config();
 		//SETUP
 		Veritrans_Config::$serverKey = Configuration::get('VT_SERVER_KEY');
@@ -673,7 +927,7 @@ class VeritransPay extends PaymentModule
 		$currency = new Currency($cookie->id_currency);
 		$total = $cart->getOrderTotal(true, Cart::BOTH);
 		
-		 $mailVars = array(
+		$mailVars = array(
 		 );
 				
 		$billing_address = new Address($cart->id_address_invoice);
@@ -686,7 +940,7 @@ class VeritransPay extends PaymentModule
 		if (Configuration::get('VT_SANITIZED') == 'on' || Configuration::get('VT_SANITIZED') == 1)
 			Veritrans_Config::$isSanitized = true;
 		
-		error_log('sanitized '.Configuration::get('VT_SANITIZED'));
+		//error_log('sanitized '.Configuration::get('VT_SANITIZED'));
 
 		// Billing Address
     	$params_billing_address = array(
@@ -762,12 +1016,75 @@ class VeritransPay extends PaymentModule
 		unset($item);
 		foreach ($items as $item) {				
 			$gross_amount += $item['price'] * $item['quantity'];
-		}
+		}	
 		
+		$isBniInstallment = Configuration::get('ENABLED_BNI_INSTALLMENT') == 1;
+		$isMandiriInstallment = Configuration::get('ENABLED_MANDIRI_INSTALLMENT') == 1;
+		$warning_redirect = false;
+		$fullPayment = true;
+
+		$installment_type_val = Configuration::get('VT_ENABLE_INSTALLMENT');
+		switch ($installment_type_val) {
+			case 'all_product':
+								
+				if ($isBniInstallment){					
+					$bni_term = $this->getTermInstallment('BNI');
+				}					
+							
+				if ($isMandiriInstallment){
+
+					$mandiri_term =	$this->getTermInstallment('MANDIRI');
+				}				
+				
+				$param_installment = array();
+				if ($isBniInstallment){
+					$param_installment['bni'] = $bni_term;
+				}
+
+				if ($isMandiriInstallment){
+					$param_installment['mandiri'] = $mandiri_term;
+				}
+				$param_required = "false";
+				$fullPayment = false;
+				break;
+			case 'certain_product':
+				$param_installment = null;
+				$products_cart = $cart->getProducts();
+				$num_product = count($products_cart);
+				if($num_product == 1){
+					$attr_product = explode(',',$products_cart[0]['attributes_small']);
+					foreach($attr_product as $att){
+						$att_trim = ltrim($att);						
+						$att_arr = explode(' ',$att_trim);
+						//error_log(print_r($att_arr,true));
+						if(strtolower($att_arr[0]) == 'installment'){
+							$fullPayment = false;
+							$param_installment = array();
+							$param_installment[strtolower($att_arr[1])] = array($att_arr[2]);
+						} 						
+					}
+				} else {
+					$warning_redirect = true;
+					$keys['message'] = 1;
+				}
+				$param_required = "true";				
+				break;						
+			case 'off':
+				$param_installment = null;
+				break;
+		}		
+	
+		$param_payment_option = array(
+			'installment' => array(
+								'required' => $param_required,
+								'installment_terms' => $param_installment 
+							)
+			);
+
 		$params_all = array(
 			'payment_type' => Configuration::get('VT_PAYMENT_TYPE'),
 			'vtweb' => array (
-					'enabled_payments' => $list_enable_payments
+					'enabled_payments' => $list_enable_payments					
 				),
 			'transaction_details' => array(
 				'order_id' => $this->currentOrder, 
@@ -776,11 +1093,29 @@ class VeritransPay extends PaymentModule
 			'item_details' => $items,
 			'customer_details' => $params_customer_details
 			);
+		
+		if ($gross_amount < 500000){
+			$warning_redirect = true;
+			$keys['message'] = 2;
+		}
+
+		if( !$warning_redirect && 
+			($isBniInstallment || $isMandiriInstallment) && 
+			(!$fullPayment)  ){
+
+			$params_all['vtweb']['payment_options'] = $param_payment_option;		
+		}
+		
 
 		if (Configuration::get('VT_API_VERSION') == 2 && Configuration::get('VT_PAYMENT_TYPE') != 'vtdirect') //transaksi https://github.com/veritrans/veritrans-php/blob/vtweb-2/examples/v2/vt_web/checkout_process.php line 77
 		{						
 			try {
 			    // Redirect to Veritrans VTWeb page
+			    if ($this->isInstallmentCart($cart->getProducts()) || ($installment_type_val == 'all_product')){
+			    	$keys['isWarning'] = $warning_redirect;
+			    } else {
+			    	$keys['isWarning'] = false;
+			    }
 			  	$keys['redirect_url'] = Veritrans_Vtweb::getRedirectionUrl($params_all);
 			}
 			catch (Exception $e) {
@@ -819,6 +1154,8 @@ class VeritransPay extends PaymentModule
 		$price = 0;
 
 		foreach ($products as $aProduct) {
+			//error_log('detail product');
+			//error_log(print_r($aProduct,true));
 			$commodities[] = array(
 				"id" => $aProduct['id_product'],
 				"price" =>  $aProduct['price_wt'],
@@ -844,7 +1181,7 @@ class VeritransPay extends PaymentModule
 				"name" => 'discount from voucher',				
 			);	
 		}
-
+		//error_log(print_r($commodities,true));
 		return $commodities;
 	}
 
@@ -887,7 +1224,7 @@ class VeritransPay extends PaymentModule
 		}
 	}
 
-	//this function exec when notification sent from MAP
+	
 	public function execNotification()
 	{
 		
@@ -900,8 +1237,8 @@ class VeritransPay extends PaymentModule
 		if ($veritrans_notification->isVerified())
 		{
 		  	//$history->id_order = (int)$veritrans_notification->order_id;		  	
-			error_log('notif verified');
-			error_log('message notif: '.(int)$veritrans_notification->order_id);
+			//error_log('notif verified');
+			//error_log('message notif: '.(int)$veritrans_notification->order_id);
 			$order_id_notif = (int)$veritrans_notification->order_id;
 			if ($veritrans_notification->transaction_status == 'capture')				
 		    {
