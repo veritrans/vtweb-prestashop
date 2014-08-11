@@ -63,7 +63,7 @@ class VeritransPay extends PaymentModule
 			);
 
 		foreach (array('BNI', 'MANDIRI') as $bank) {
-			foreach (array(3, 6, 9, 12, 18, 24) as $months) {
+			foreach (array(3, 6, 12) as $months) {
 				array_push($this->config_keys, 'VT_INSTALLMENTS_' . $bank . '_' . $months);
 			}
 		}
@@ -249,7 +249,7 @@ class VeritransPay extends PaymentModule
 		$installments_options = array();
 		foreach (array('BNI', 'MANDIRI') as $bank) {
 			$installments_options[$bank] = array();
-			foreach (array(3, 6, 9, 12, 18, 24) as $months) {
+			foreach (array(3, 6, 12) as $months) {
 				array_push($installments_options[$bank], array(
 					'id_option' => $bank . '_' . $months,
 					'name' => $months . ' Months'
@@ -270,17 +270,17 @@ class VeritransPay extends PaymentModule
 
 		$installment_type = array(
 			array(
+				'id_option' => 'off',
+				'name' => 'Off'
+				),
+			array(
 				'id_option' => 'all_product',
 				'name' => 'All Products'
 				),
 			array(
 				'id_option' => 'certain_product',
 				'name' => 'Certain Product'
-				),
-			array(
-				'id_option' => 'off',
-				'name' => 'Off'
-				)
+				)			
 			);
 
 		$fields_form = array(
@@ -304,7 +304,7 @@ class VeritransPay extends PaymentModule
 						),
 					array(
 						'type' => 'text',
-						'label' => 'VT-Direct Client Key',
+						'label' => 'VT Client Key',
 						'name' => 'VT_CLIENT_KEY',
 						'required' => true,
 						'desc' => 'Consult to your Merchant Administration Portal for the value of this field.',
@@ -312,7 +312,7 @@ class VeritransPay extends PaymentModule
 						),
 					array(
 						'type' => 'text',
-						'label' => 'VT-Direct Server Key',
+						'label' => 'VT Server Key',
 						'name' => 'VT_SERVER_KEY',
 						'required' => true,
 						'desc' => 'Consult to your Merchant Administration Portal for the value of this field.',
