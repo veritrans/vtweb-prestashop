@@ -39,16 +39,24 @@
   function hideOptions(nameClass, type){
     if(type=="class"){
       $("."+nameClass).closest('.form-group').hide();    
+      $("."+nameClass).closest('.margin-form').hide(); 
+      $("."+nameClass).closest('.margin-form').prev().hide();    
     } else {
       $("#"+nameClass).closest('.form-group').hide();    
+      $("#"+nameClass).closest('.margin-form').hide();
+      $("#"+nameClass).closest('.margin-form').prev().hide();    
     }
   }
 
   function showOptions(nameClass, type){
     if (type=="class"){
       $("."+nameClass).closest('.form-group').show();
+      $("."+nameClass).closest('.margin-form').show();
+      $("."+nameClass).closest('.margin-form').prev().show();
     }else{
       $("#"+nameClass).closest('.form-group').show();
+      $("#"+nameClass).closest('.margin-form').show();
+      $("#"+nameClass).closest('.margin-form').prev().show();
     }  
   } 
 
