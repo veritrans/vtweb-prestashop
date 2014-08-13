@@ -63,7 +63,7 @@ class VeritransPay extends PaymentModule
 			);
 
 		foreach (array('BNI', 'MANDIRI') as $bank) {
-			foreach (array(3, 6, 9, 12, 18, 24) as $months) {
+			foreach (array(3, 6, 12) as $months) {
 				array_push($this->config_keys, 'VT_INSTALLMENTS_' . $bank . '_' . $months);
 			}
 		}
@@ -249,7 +249,7 @@ class VeritransPay extends PaymentModule
 		$installments_options = array();
 		foreach (array('BNI', 'MANDIRI') as $bank) {
 			$installments_options[$bank] = array();
-			foreach (array(3, 6, 9, 12, 18, 24) as $months) {
+			foreach (array(3, 6, 12) as $months) {
 				array_push($installments_options[$bank], array(
 					'id_option' => $bank . '_' . $months,
 					'name' => $months . ' Months'
@@ -270,17 +270,17 @@ class VeritransPay extends PaymentModule
 
 		$installment_type = array(
 			array(
+				'id_option' => 'off',
+				'name' => 'Off'
+				),
+			array(
 				'id_option' => 'all_product',
 				'name' => 'All Products'
 				),
 			array(
 				'id_option' => 'certain_product',
 				'name' => 'Certain Product'
-				),
-			array(
-				'id_option' => 'off',
-				'name' => 'Off'
-				)
+				)			
 			);
 
 		$fields_form = array(
@@ -304,7 +304,7 @@ class VeritransPay extends PaymentModule
 						),
 					array(
 						'type' => 'text',
-						'label' => 'VT-Direct Client Key',
+						'label' => 'VT Client Key',
 						'name' => 'VT_CLIENT_KEY',
 						'required' => true,
 						'desc' => 'Consult to your Merchant Administration Portal for the value of this field.',
@@ -312,16 +312,18 @@ class VeritransPay extends PaymentModule
 						),
 					array(
 						'type' => 'text',
-						'label' => 'VT-Direct Server Key',
+						'label' => 'VT Server Key',
 						'name' => 'VT_SERVER_KEY',
 						'required' => true,
 						'desc' => 'Consult to your Merchant Administration Portal for the value of this field.',
 						'class' => 'v1_vtdirect_settings v2_settings sensitive'
 						),
-					array(
-						'type' => 'switch',
-						'label' => '3D Secure',
-						'name' => 'VT_3D_SECURE',						
+					array(						
+						'type' => (version_compare(Configuration::get('PS_VERSION_DB'), '1.6') == -1)?'radio':'switch',
+						'label' => 'Enable 3D Secure?',
+						'name' => 'VT_3D_SECURE',
+						'required' => true,
+						'is_bool' => true,
 						'values' => array(
 							array(
 								'id' => '3d_secure_yes',
@@ -333,11 +335,12 @@ class VeritransPay extends PaymentModule
 								'value' => 0,
 								'label' => 'No'
 								)
-							),
+							),						
+						'desc' => 'You must enable 3D Secure. Please contact us if you wish to disable this feature in the Production environment.'
 						//'class' => ''
 						),
 					array(
-						'type' => 'switch',
+						'type' => (version_compare(Configuration::get('PS_VERSION_DB'), '1.6') == -1)?'radio':'switch',
 						'label' => 'Enable sanitization',
 						'name' => 'VT_SANITIZED',						
 						'is_bool' => true,
@@ -356,7 +359,7 @@ class VeritransPay extends PaymentModule
 						//'class' => ''
 						),
 					array(
-						'type' => 'switch',
+						'type' => (version_compare(Configuration::get('PS_VERSION_DB'), '1.6') == -1)?'radio':'switch',
 						'label' => 'CIMB Clicks',
 						'name' => 'ENABLED_CIMB',						
 						'is_bool' => true,
@@ -375,7 +378,7 @@ class VeritransPay extends PaymentModule
 						//'class' => ''
 						),
 					array(
-						'type' => 'switch',
+						'type' => (version_compare(Configuration::get('PS_VERSION_DB'), '1.6') == -1)?'radio':'switch',
 						'label' => 'Mandiri ClickPay',
 						'name' => 'ENABLED_MANDIRI',						
 						'is_bool' => true,
@@ -405,18 +408,18 @@ class VeritransPay extends PaymentModule
 						//'class' => ''
 						),
 					array(
-						'type' => 'switch',
+						'type' => (version_compare(Configuration::get('PS_VERSION_DB'), '1.6') == -1)?'radio':'switch',
 						'label' => 'BNI Installment',
 						'name' => 'ENABLED_BNI_INSTALLMENT',						
-						//'is_bool' => true,
+						'is_bool' => true,
 						'values' => array(
 							array(
-								'id' => 'bni_installment_yes',
+								'id' => 'ENABLED_BNI_INSTALLMENT_on',
 								'value' => 1,
 								'label' => 'Yes'
 								),
 							array(
-								'id' => 'bni_installment_no',
+								'id' => 'ENABLED_BNI_INSTALLMENT_off',
 								'value' => 0,
 								'label' => 'No'
 								)
@@ -436,18 +439,18 @@ class VeritransPay extends PaymentModule
 						'class' => 'VT_INSTALLMENTS_BNI'	
 						),
 					array(
-						'type' => 'switch',
+						'type' => (version_compare(Configuration::get('PS_VERSION_DB'), '1.6') == -1)?'radio':'switch',
 						'label' => 'MANDIRI Installment',
 						'name' => 'ENABLED_MANDIRI_INSTALLMENT',						
 						'is_bool' => true,
 						'values' => array(
 							array(
-								'id' => 'mandiri_installment_yes',
+								'id' => 'ENABLED_MANDIRI_INSTALLMENT_on',
 								'value' => 1,
 								'label' => 'Yes'
 								),
 							array(
-								'id' => 'mandiri_installment_no',
+								'id' => 'ENABLED_MANDIRI_INSTALLMENT_off',
 								'value' => 0,
 								'label' => 'No'
 								)
