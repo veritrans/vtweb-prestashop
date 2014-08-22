@@ -869,7 +869,7 @@ class VeritransPay extends PaymentModule
 	public function isInstallmentCart($products){		
 		foreach($products as $prod){
 			$str_attr = $prod['attributes_small'];
-			if (strpos($str_attr, 'installment') !== FALSE){				
+			if (strpos(strtolower($str_attr), 'installment') !== FALSE){				
 				return true;
 			}    
 		}		
