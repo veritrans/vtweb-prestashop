@@ -1237,8 +1237,8 @@ class VeritransPay extends PaymentModule
 		$history = new OrderHistory();
 		$history->id_order = (int)$veritrans_notification->order_id;
 		/** Validating order*/
-		if ($veritrans_notification->isVerified())
-		{
+		//if ($veritrans_notification->isVerified())
+		//{
 		  	//$history->id_order = (int)$veritrans_notification->order_id;		  	
 			//error_log('notif verified');
 			//error_log('message notif: '.(int)$veritrans_notification->order_id);
@@ -1265,7 +1265,7 @@ class VeritransPay extends PaymentModule
 		     }
 		    
 		     $history->add(true);		     			  
-		}
+		//}
 		exit;
 	}
 }
