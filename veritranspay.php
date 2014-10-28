@@ -56,6 +56,7 @@ class VeritransPay extends PaymentModule
 			'VT_ENVIRONMENT',
 			'ENABLED_CIMB',
 			'ENABLED_MANDIRI',
+			'ENABLED_PERMATAVA',
 			'VT_SANITIZED',
 			'VT_ENABLE_INSTALLMENT',
 			'ENABLED_BNI_INSTALLMENT',
@@ -89,7 +90,9 @@ class VeritransPay extends PaymentModule
 		if (!isset($config['ENABLED_CIMB']))
 			Configuration::set('ENABLED_CIMB', 0);		
 		if (!isset($config['ENABLED_MANDIRI']))
-			Configuration::set('ENABLED_MANDIRI', 0);
+			Configuration::set('ENABLED_MANDIRI', 0);		
+		if (!isset($config['ENABLED_PERMATAVA']))
+			Configuration::set('ENABLED_PERMATAVA', 0);
 
 		parent::__construct();
 
@@ -397,6 +400,25 @@ class VeritransPay extends PaymentModule
 						//'class' => ''
 						),
 					array(
+						'type' => (version_compare(Configuration::get('PS_VERSION_DB'), '1.6') == -1)?'radio':'switch',
+						'label' => 'Permata VA',
+						'name' => 'ENABLED_PERMATAVA',						
+						'is_bool' => true,
+						'values' => array(
+							array(
+								'id' => 'permatava_yes',
+								'value' => 1,
+								'label' => 'Yes'
+								),
+							array(
+								'id' => 'permatava_no',
+								'value' => 0,
+								'label' => 'No'
+								)
+							),
+						//'class' => ''
+						),
+					array(
 						'type' => 'select',
 						'label' => 'Enable Installments',
 						'name' => 'VT_ENABLE_INSTALLMENT',						
@@ -684,6 +706,7 @@ class VeritransPay extends PaymentModule
 			'enable_sanitized' => htmlentities(Configuration::get('VT_SANITIZED'), ENT_COMPAT, 'UTF-8'),
 			'enabled_cimb' => htmlentities(Configuration::get('ENABLED_CIMB'), ENT_COMPAT, 'UTF-8'),
 			'enabled_mandiri' => htmlentities(Configuration::get('ENABLED_MANDIRI'), ENT_COMPAT, 'UTF-8'),
+			'enabled_permatava' => htmlentities(Configuration::get('ENABLED_PERMATAVA'), ENT_COMPAT, 'UTF-8'),
 			'statuses' => $order_states,
 			'payment_success_status_map' => htmlentities(Configuration::get('VT_PAYMENT_SUCCESS_STATUS_MAP'), ENT_COMPAT, 'UTF-8'),
 			'payment_challenge_status_map' => htmlentities(Configuration::get('VT_PAYMENT_CHALLENGE_STATUS_MAP'), ENT_COMPAT, 'UTF-8'),
@@ -910,6 +933,9 @@ class VeritransPay extends PaymentModule
 		if (Configuration::get('ENABLED_MANDIRI')){
 			$list_enable_payments[] = "mandiri_clickpay";
 		}
+		if (Configuration::get('ENABLED_PERMATAVA')){
+			$list_enable_payments[] = "bank_transfer";
+		}
 		
 
 		$veritrans = new Veritrans_Config();
@@ -1027,6 +1053,7 @@ class VeritransPay extends PaymentModule
 		$fullPayment = true;
 
 		$installment_type_val = Configuration::get('VT_ENABLE_INSTALLMENT');
+		$param_required;
 		switch ($installment_type_val) {
 			case 'all_product':
 								
@@ -1254,11 +1281,15 @@ class VeritransPay extends PaymentModule
 		     	{
 		       		$history->changeIdOrderState(Configuration::get('VT_PAYMENT_CHALLENGE_STATUS_MAP'), $order_id_notif);
 		       		echo 'Valid challenge notification accepted.';
-		     	} 
+		     	} 		       	
 		     } else if ($veritrans_notification->transaction_status == 'settlement'){
 		     	$history->changeIdOrderState(Configuration::get('VT_PAYMENT_SUCCESS_STATUS_MAP'), $order_id_notif);
 		       	echo 'Valid success notification accepted.';
-		     }else
+		     }else if ($veritrans_notification->transaction_status == 'pending'){
+		     	$history->changeIdOrderState(Configuration::get('VT_PAYMENT_CHALLENGE_STATUS_MAP'), $order_id_notif);
+		       	echo 'Pending notification accepted.';
+		     }
+			 else
 		     {
 		       $history->changeIdOrderState(Configuration::get('VT_PAYMENT_FAILURE_STATUS_MAP'), $order_id_notif);
 		       echo 'Valid failure notification accepted';

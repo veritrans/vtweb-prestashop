@@ -102,7 +102,7 @@
         </td>
       </tr>
       <!-- PAYMENT_FAILURE_STATUS_MAP -->
-
+	  
       <tr>
         <td width="300" style="vertical-align: top;">Enable 3D Secure?</td>
         <td><input type="checkbox" name="VT_3D_SECURE" {if $enable_3d_secure}checked{/if} style="width: 300px;" /></td>
@@ -126,6 +126,11 @@
         <td><input type="checkbox" name="ENABLED_MANDIRI" {if $enabled_mandiri}checked{/if} style="width: 300px;" /></td>
       </tr>      
       <!-- mandiri payment -->
+       <tr>
+        <td width="300" style="vertical-align: top;">Enable Permata VA?</td>
+        <td><input type="checkbox" name="ENABLED_PERMATAVA" {if $enabled_permatava}checked{/if} style="width: 300px;" /></td>
+      </tr>      
+      <!-- permata va -->
       <tr>
         <td width="300" style="vertical-align: top;">Kurs</td>
         <td><input type="text" name="VT_KURS" value="{$kurs}" style="width: 300px;" /></td>
