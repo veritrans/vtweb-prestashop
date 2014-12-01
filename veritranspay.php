@@ -54,9 +54,11 @@ class VeritransPay extends PaymentModule
 			'VT_PAYMENT_FAILURE_STATUS_MAP',
 			'VT_PAYMENT_CHALLENGE_STATUS_MAP',
 			'VT_ENVIRONMENT',
+			'ENABLED_CREDIT_CARD',
 			'ENABLED_CIMB',
 			'ENABLED_MANDIRI',
 			'ENABLED_PERMATAVA',
+			'ENABLED_BRIEPAY',
 			'VT_SANITIZED',
 			'VT_ENABLE_INSTALLMENT',
 			'ENABLED_BNI_INSTALLMENT',
@@ -87,12 +89,16 @@ class VeritransPay extends PaymentModule
 
 		if (!isset($config['VT_SANITIZED']))
 			Configuration::set('VT_SANITIZED', 0);	
+		if (!isset($config['ENABLED_CREDIT_CARD']))
+			Configuration::set('ENABLED_CREDIT_CARD', 0);
 		if (!isset($config['ENABLED_CIMB']))
 			Configuration::set('ENABLED_CIMB', 0);		
 		if (!isset($config['ENABLED_MANDIRI']))
 			Configuration::set('ENABLED_MANDIRI', 0);		
 		if (!isset($config['ENABLED_PERMATAVA']))
 			Configuration::set('ENABLED_PERMATAVA', 0);
+		if (!isset($config['ENABLED_BRIEPAY']))
+			Configuration::set('ENABLED_BRIEPAY', 0);
 
 		parent::__construct();
 
@@ -363,6 +369,25 @@ class VeritransPay extends PaymentModule
 						),
 					array(
 						'type' => (version_compare(Configuration::get('PS_VERSION_DB'), '1.6') == -1)?'radio':'switch',
+						'label' => 'Credit Card',
+						'name' => 'ENABLED_CREDIT_CARD',						
+						'is_bool' => true,
+						'values' => array(
+							array(
+								'id' => 'credit_yes',
+								'value' => 1,
+								'label' => 'Yes'
+								),
+							array(
+								'id' => 'credit_no',
+								'value' => 0,
+								'label' => 'No'
+								)
+							),
+						//'class' => ''
+						),
+					array(
+						'type' => (version_compare(Configuration::get('PS_VERSION_DB'), '1.6') == -1)?'radio':'switch',
 						'label' => 'CIMB Clicks',
 						'name' => 'ENABLED_CIMB',						
 						'is_bool' => true,
@@ -412,6 +437,25 @@ class VeritransPay extends PaymentModule
 								),
 							array(
 								'id' => 'permatava_no',
+								'value' => 0,
+								'label' => 'No'
+								)
+							),
+						//'class' => ''
+						),
+					array(
+						'type' => (version_compare(Configuration::get('PS_VERSION_DB'), '1.6') == -1)?'radio':'switch',
+						'label' => 'BRI EPAY',
+						'name' => 'ENABLED_BRIEPAY',						
+						'is_bool' => true,
+						'values' => array(
+							array(
+								'id' => 'briepay_yes',
+								'value' => 1,
+								'label' => 'Yes'
+								),
+							array(
+								'id' => 'briepay_no',
 								'value' => 0,
 								'label' => 'No'
 								)
@@ -925,8 +969,11 @@ class VeritransPay extends PaymentModule
 		$usd = Configuration::get('VT_KURS');
 		$cf = Configuration::get('VT_CONVENIENCE_FEE') * 0.01;
 
-		$list_enable_payments = array("credit_card");
+		$list_enable_payments = array();
 		
+		if (Configuration::get('ENABLED_CREDIT_CARD')){
+			$list_enable_payments[] = "credit_card";
+		}		
 		if (Configuration::get('ENABLED_CIMB')){
 			$list_enable_payments[] = "cimb_clicks";
 		}
@@ -935,6 +982,9 @@ class VeritransPay extends PaymentModule
 		}
 		if (Configuration::get('ENABLED_PERMATAVA')){
 			$list_enable_payments[] = "bank_transfer";
+		}
+		if (Configuration::get('ENABLED_BRIEPAY')){
+			$list_enable_payments[] = "bri_epay";
 		}
 		
 
@@ -1287,6 +1337,9 @@ class VeritransPay extends PaymentModule
 		       	echo 'Valid success notification accepted.';
 		     }else if ($veritrans_notification->transaction_status == 'pending'){
 		     	$history->changeIdOrderState(Configuration::get('VT_PAYMENT_CHALLENGE_STATUS_MAP'), $order_id_notif);
+		       	echo 'Pending notification accepted.';
+		     }else if ($veritrans_notification->transaction_status == 'cancel'){
+		     	$history->changeIdOrderState(Configuration::get('VT_PAYMENT_FAILURE_STATUS_MAP'), $order_id_notif);
 		       	echo 'Pending notification accepted.';
 		     }
 			 else

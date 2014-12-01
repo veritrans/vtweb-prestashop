@@ -114,6 +114,12 @@
         <td><input type="checkbox" name="VT_SANITIZED" {if $enable_sanitized}checked{/if} style="width: 300px;" /></td>
       </tr>
       <!-- Sanitized -->
+      <tr>
+        <td width="300" style="vertical-align: top;">Enable Credit CARD?</td>
+        <td><input type="checkbox" name="ENABLED_CREDIT_CARD" {if $enabled_cimb}checked{/if} style="width: 300px;" /></td>
+      </tr>
+      <!-- Credit card payment -->
+
 
       <tr>
         <td width="300" style="vertical-align: top;">Enable CIMB Clicks?</td>
@@ -131,6 +137,11 @@
         <td><input type="checkbox" name="ENABLED_PERMATAVA" {if $enabled_permatava}checked{/if} style="width: 300px;" /></td>
       </tr>      
       <!-- permata va -->
+       <tr>
+        <td width="300" style="vertical-align: top;">Enable Permata VA?</td>
+        <td><input type="checkbox" name="ENABLED_BRIEPAY" {if $enabled_briepay}checked{/if} style="width: 300px;" /></td>
+      </tr>      
+      <!-- BRI epay -->      
       <tr>
         <td width="300" style="vertical-align: top;">Kurs</td>
         <td><input type="text" name="VT_KURS" value="{$kurs}" style="width: 300px;" /></td>
