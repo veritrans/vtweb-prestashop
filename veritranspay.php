@@ -991,7 +991,7 @@ class VeritransPay extends PaymentModule
 		$veritrans = new Veritrans_Config();
 		//SETUP
 		Veritrans_Config::$serverKey = Configuration::get('VT_SERVER_KEY');
-		Veritrans_Config::$isProduction = Configuration::get('VT_ENVIRONMENT') == 'Production' ? true : false;
+		Veritrans_Config::$isProduction = Configuration::get('VT_ENVIRONMENT') == 'production' ? true : false;
 
 		$url = Veritrans_Config::getBaseUrl(); 
 
