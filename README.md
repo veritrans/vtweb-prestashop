@@ -5,7 +5,7 @@ Veritrans :heart: Prestashop!
 
 ## Installation Instruction
 
-1. Download the plugin either from this repository or the Prestashop Extension.
+1. Download the plugin from this repository.
 
 2. Extract the modules, then rename the folder modules as **veritranspay** and zip this modules as **veritranspay.zip**
 
@@ -39,4 +39,11 @@ Veritrans :heart: Prestashop!
 
      - Prestashop 1.5 and higher: `http://[your-site-url]/index.php?fc=module&module=veritranspay&controller=confirmation`
 
-2. Enjoy!
+#### Get help
+
+* [Veritrans sandbox login](https://my.sandbox.veritrans.co.id/)
+* [Veritrans sandbox registration](https://my.sandbox.veritrans.co.id/register)
+* [Veritrans registration](https://my.veritrans.co.id/register)
+* [Veritrans documentation](http://docs.veritrans.co.id)
+* [Veritrans Woocommerce Documentation](http://docs.veritrans.co.id/vtweb/integration_woocommerce.html)
+* Technical support [support@veritrans.co.id](mailto:support@veritrans.co.id)
