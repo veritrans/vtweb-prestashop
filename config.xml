@@ -2,7 +2,7 @@
         <module>
             <name>veritranspay</name>
             <displayName><![CDATA[Veritrans Pay]]></displayName>
-            <version><![CDATA[1.0]]></version>
+            <version><![CDATA[2.0]]></version>
             <description><![CDATA[Accept payments for your products via Veritrans.]]></description>
             <author><![CDATA[Veritrans]]></author>
             <tab><![CDATA[payments_gateways]]></tab>
