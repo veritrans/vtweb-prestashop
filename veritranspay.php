@@ -62,7 +62,9 @@ class VeritransPay extends PaymentModule
 			'VT_SANITIZED',
 			'VT_ENABLE_INSTALLMENT',
 			'ENABLED_BNI_INSTALLMENT',
-			'ENABLED_MANDIRI_INSTALLMENT'
+			'ENABLED_MANDIRI_INSTALLMENT',
+			'VT_INSTALLMENTS_BNI',
+			'VT_INSTALLMENTS_MANDIRI'
 			);
 
 		foreach (array('BNI', 'MANDIRI') as $bank) {
@@ -493,14 +495,9 @@ class VeritransPay extends PaymentModule
 						//'class' => 'ENABLED_BNI_INSTALLMENT'
 						),
 					array(
-						'type' => 'checkbox',
+						'type' => 'text',
 						'label' => 'Enable BNI Installments?',
-						'name' => 'VT_INSTALLMENTS',
-						'values' => array(
-							'query' => $installments_options['BNI'],
-							'id' => 'id_option',
-							'name' => 'name'
-							),
+						'name' => 'VT_INSTALLMENTS_BNI',
 						//'class' => 'v1_vtweb_settings sensitive'\
 						'class' => 'VT_INSTALLMENTS_BNI'	
 						),
@@ -522,8 +519,15 @@ class VeritransPay extends PaymentModule
 								)
 							),
 						//'class' => 'ENABLED_MANDIRI_INSTALLMENT'
-						),							
+						),
 					array(
+						'type' => 'text',
+						'label' => 'Enable Mandiri Installments?',
+						'name' => 'VT_INSTALLMENTS_MANDIRI',
+						//'class' => 'v1_vtweb_settings sensitive'\
+						'class' => 'VT_INSTALLMENTS_MANDIRI'	
+						),							
+				/*	array(
 						'type' => 'checkbox',
 						'label' => 'Enable Mandiri Installments?',
 						'name' => 'VT_INSTALLMENTS',
@@ -534,7 +538,7 @@ class VeritransPay extends PaymentModule
 							),
 						//'class' => 'v1_vtweb_settings sensitive'
 						'class' => 'VT_INSTALLMENTS_MANDIRI'
-						),
+						),*/
 					array(
 						'type' => 'select',
 						'label' => 'Map payment SUCCESS status to:',
@@ -756,6 +760,7 @@ class VeritransPay extends PaymentModule
 			'payment_challenge_status_map' => htmlentities(Configuration::get('VT_PAYMENT_CHALLENGE_STATUS_MAP'), ENT_COMPAT, 'UTF-8'),
 			'payment_failure_status_map' => htmlentities(Configuration::get('VT_PAYMENT_FAILURE_STATUS_MAP'), ENT_COMPAT, 'UTF-8'),
 			'kurs' => htmlentities(Configuration::get('VT_KURS', $this->veritrans_kurs), ENT_COMPAT, 'UTF-8'),
+			//'kurs' => htmlentities(Configuration::get('VT_INSTALLMENTS_BNI', ENT_COMPAT, 'UTF-8'),
 			'convenience_fee' => htmlentities(Configuration::get('VT_CONVENIENCE_FEE', $this->veritrans_convenience_fee), ENT_COMPAT, 'UTF-8'),
 			'this_path' => $this->_path,
 			'this_path_ssl' => Tools::getShopDomainSsl(true, true).__PS_BASE_URI__.'modules/'.$this->name.'/'
@@ -919,18 +924,24 @@ class VeritransPay extends PaymentModule
 
 		return $this->display(__FILE__, 'views/templates/front/payment_execution.tpl');
 	}
-
+//
 	public function getTermInstallment($name_bank){
 		$ans = array();
 		foreach ($this->config_keys as $key) {
 			if ( (strpos($key, 'VT_INSTALLMENTS_' . $name_bank ) !== FALSE) && (Configuration::get($key) == 'on') ){
+				
+				$term = Configuration::get('VT_INSTALLMENTS_'.$name_bank);
+				
 				$key_array = explode('_', $key);
+				//error_log($key);
 				//error_log(print_r($key_array,true));
 				$ans[] = $key_array[3];
+				//error_log($key_array[3]);
 			}
     		
 		}
-		return $ans;
+		//return $ans;
+		return $term2;
 	}
 
 	public function isInstallmentCart($products){		
@@ -1108,12 +1119,24 @@ class VeritransPay extends PaymentModule
 			case 'all_product':
 								
 				if ($isBniInstallment){					
-					$bni_term = $this->getTermInstallment('BNI');
+					//$bni_term2 = $this->getTermInstallment('BNI');
+					$a = Configuration::get('VT_INSTALLMENTS_BNI');
+					$term = explode(',',$a);
+					$bni_term = $term;
+					//error_log(print_r($bni_term,true));
+					//error_log($bni_term,true);
 				}					
 							
 				if ($isMandiriInstallment){
 
 					$mandiri_term =	$this->getTermInstallment('MANDIRI');
+					
+					$a = Configuration::get('VT_INSTALLMENTS_MANDIRI');
+					$term = explode(',',$a);
+					$mandiri_term = $term;
+
+					//error_log($mandiri_term,true);
+					//error_log(print_r($mandiri_term,true));
 				}				
 				
 				$param_installment = array();
@@ -1154,6 +1177,8 @@ class VeritransPay extends PaymentModule
 				break;
 		}		
 	
+
+	//error_log($param_installment,true);
 		$param_payment_option = array(
 			'installment' => array(
 								'required' => $param_required,
