@@ -59,6 +59,8 @@ class VeritransPay extends PaymentModule
 			'ENABLED_MANDIRI',
 			'ENABLED_PERMATAVA',
 			'ENABLED_BRIEPAY',
+			'ENABLED_TELKOMSEL_CASH',
+			'ENABLED_XL_TUNAI',
 			'VT_SANITIZED',
 			'VT_ENABLE_INSTALLMENT',
 			'ENABLED_BNI_INSTALLMENT',
@@ -101,6 +103,10 @@ class VeritransPay extends PaymentModule
 			Configuration::set('ENABLED_PERMATAVA', 0);
 		if (!isset($config['ENABLED_BRIEPAY']))
 			Configuration::set('ENABLED_BRIEPAY', 0);
+		if (!isset($config['ENABLED_TELKOMSEL_CASH']))
+			Configuration::set('ENABLED_TELKOMSEL_CASH', 0);
+		if (!isset($config['ENABLED_XL_TUNAI']))
+			Configuration::set('ENABLED_XL_TUNAI', 0);
 
 		parent::__construct();
 
@@ -458,6 +464,44 @@ class VeritransPay extends PaymentModule
 								),
 							array(
 								'id' => 'briepay_no',
+								'value' => 0,
+								'label' => 'No'
+								)
+							),
+						//'class' => ''
+						),
+					array(
+						'type' => (version_compare(Configuration::get('PS_VERSION_DB'), '1.6') == -1)?'radio':'switch',
+						'label' => 'T-CASH',
+						'name' => 'ENABLED_TELKOMSEL_CASH',						
+						'is_bool' => true,
+						'values' => array(
+							array(
+								'id' => 'telkomsel_cash_yes',
+								'value' => 1,
+								'label' => 'Yes'
+								),
+							array(
+								'id' => 'telkomsel_cash_no',
+								'value' => 0,
+								'label' => 'No'
+								)
+							),
+						//'class' => ''
+						),
+					array(
+						'type' => (version_compare(Configuration::get('PS_VERSION_DB'), '1.6') == -1)?'radio':'switch',
+						'label' => 'XL TUNAI',
+						'name' => 'ENABLED_XL_TUNAI',						
+						'is_bool' => true,
+						'values' => array(
+							array(
+								'id' => 'xl_tunai_yes',
+								'value' => 1,
+								'label' => 'Yes'
+								),
+							array(
+								'id' => 'xl_tunai_no',
 								'value' => 0,
 								'label' => 'No'
 								)
@@ -997,6 +1041,12 @@ class VeritransPay extends PaymentModule
 		if (Configuration::get('ENABLED_BRIEPAY')){
 			$list_enable_payments[] = "bri_epay";
 		}
+		if (Configuration::get('ENABLED_TELKOMSEL_CASH')){
+			$list_enable_payments[] = "telkomsel_cash";
+		}
+		if (Configuration::get('ENABLED_XL_TUNAI')){
+			$list_enable_payments[] = "xl_tunai";
+		}		
 		
 
 		$veritrans = new Veritrans_Config();
