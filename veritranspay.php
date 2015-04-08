@@ -1383,7 +1383,7 @@ class VeritransPay extends PaymentModule
 	public function execNotification()
 	{
 		
-		Veritrans_Config::$serverKey = Configuration::get('VT_SERVER_KEY'); 
+		header("HTTP/1.1 200 OK");
 		$veritrans_notification = new Veritrans_Notification(); //
 
 		$history = new OrderHistory();
