@@ -61,6 +61,7 @@ class VeritransPay extends PaymentModule
 			'ENABLED_BRIEPAY',
 			'ENABLED_TELKOMSEL_CASH',
 			'ENABLED_XL_TUNAI',
+			'ENABLED_MANDIRI_BILL',
 			'VT_SANITIZED',
 			'VT_ENABLE_INSTALLMENT',
 			'ENABLED_BNI_INSTALLMENT',
@@ -107,6 +108,8 @@ class VeritransPay extends PaymentModule
 			Configuration::set('ENABLED_TELKOMSEL_CASH', 0);
 		if (!isset($config['ENABLED_XL_TUNAI']))
 			Configuration::set('ENABLED_XL_TUNAI', 0);
+		if (!isset($config['ENABLED_MANDIRI_BILL']))
+			Configuration::set('ENABLED_MANDIRI_BILL', 0);
 
 		parent::__construct();
 
@@ -502,6 +505,25 @@ class VeritransPay extends PaymentModule
 								),
 							array(
 								'id' => 'xl_tunai_no',
+								'value' => 0,
+								'label' => 'No'
+								)
+							),
+						//'class' => ''
+						),
+					array(
+						'type' => (version_compare(Configuration::get('PS_VERSION_DB'), '1.6') == -1)?'radio':'switch',
+						'label' => 'MANDIRI BILL',
+						'name' => 'ENABLED_MANDIRI_BILL',						
+						'is_bool' => true,
+						'values' => array(
+							array(
+								'id' => 'mandiri_bill_yes',
+								'value' => 1,
+								'label' => 'Yes'
+								),
+							array(
+								'id' => 'mandiri_bill_no',
 								'value' => 0,
 								'label' => 'No'
 								)
@@ -1046,7 +1068,10 @@ class VeritransPay extends PaymentModule
 		}
 		if (Configuration::get('ENABLED_XL_TUNAI')){
 			$list_enable_payments[] = "xl_tunai";
-		}		
+		}	
+		if (Configuration::get('ENABLED_MANDIRI_BILL')){
+			$list_enable_payments[] = "mandiri_bill";
+		}	
 		
 
 		$veritrans = new Veritrans_Config();
