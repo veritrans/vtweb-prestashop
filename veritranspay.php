@@ -1408,9 +1408,6 @@ class VeritransPay extends PaymentModule
 	public function execNotification()
 	{
 		header("HTTP/1.1 200 OK");
-		$veritrans = new Veritrans_Config();
-		
-		Veritrans_Config::$serverKey = Configuration::get('VT_SERVER_KEY');
 		Veritrans_Config::$isProduction = Configuration::get('VT_ENVIRONMENT') == 'production' ? true : false;
 
 		$veritrans_notification = new Veritrans_Notification(); 
