@@ -1407,13 +1407,16 @@ class VeritransPay extends PaymentModule
 	
 	public function execNotification()
 	{
-		
 		header("HTTP/1.1 200 OK");
-		$veritrans_notification = new Veritrans_Notification(); //
+		$veritrans = new Veritrans_Config();
+		
+		Veritrans_Config::$serverKey = Configuration::get('VT_SERVER_KEY');
+		Veritrans_Config::$isProduction = Configuration::get('VT_ENVIRONMENT') == 'production' ? true : false;
 
+		$veritrans_notification = new Veritrans_Notification(); 
 		$history = new OrderHistory();
 		$history->id_order = (int)$veritrans_notification->order_id;
-		/** Validating order*/
+		//Validating order
 		//if ($veritrans_notification->isVerified())
 		//{
 		  	//$history->id_order = (int)$veritrans_notification->order_id;		  	
