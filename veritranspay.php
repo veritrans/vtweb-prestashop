@@ -62,6 +62,7 @@ class VeritransPay extends PaymentModule
 			'ENABLED_TELKOMSEL_CASH',
 			'ENABLED_XL_TUNAI',
 			'ENABLED_MANDIRI_BILL',
+			'ENABLED_BBM_MONEY',
 			'VT_SANITIZED',
 			'VT_ENABLE_INSTALLMENT',
 			'ENABLED_BNI_INSTALLMENT',
@@ -110,6 +111,8 @@ class VeritransPay extends PaymentModule
 			Configuration::set('ENABLED_XL_TUNAI', 0);
 		if (!isset($config['ENABLED_MANDIRI_BILL']))
 			Configuration::set('ENABLED_MANDIRI_BILL', 0);
+		if (!isset($config['ENABLED_BBM_MONEY']))
+			Configuration::set('ENABLED_BBM_MONEY', 0);		
 
 		parent::__construct();
 
@@ -515,6 +518,25 @@ class VeritransPay extends PaymentModule
 						'type' => (version_compare(Configuration::get('PS_VERSION_DB'), '1.6') == -1)?'radio':'switch',
 						'label' => 'MANDIRI BILL',
 						'name' => 'ENABLED_MANDIRI_BILL',						
+						'is_bool' => true,
+						'values' => array(
+							array(
+								'id' => 'mandiri_bill_yes',
+								'value' => 1,
+								'label' => 'Yes'
+								),
+							array(
+								'id' => 'mandiri_bill_no',
+								'value' => 0,
+								'label' => 'No'
+								)
+							),
+						//'class' => ''
+						),
+					array(
+						'type' => (version_compare(Configuration::get('PS_VERSION_DB'), '1.6') == -1)?'radio':'switch',
+						'label' => 'BBM MONEY',
+						'name' => 'ENABLED_BBM_MONEY',						
 						'is_bool' => true,
 						'values' => array(
 							array(
@@ -1070,9 +1092,11 @@ class VeritransPay extends PaymentModule
 			$list_enable_payments[] = "xl_tunai";
 		}	
 		if (Configuration::get('ENABLED_MANDIRI_BILL')){
-			$list_enable_payments[] = "mandiri_bill";
+			$list_enable_payments[] = "echannel";
+		}
+		if (Configuration::get('ENABLED_BBM_MONEY')){
+			$list_enable_payments[] = "bbm_money";
 		}	
-		
 
 		$veritrans = new Veritrans_Config();
 		//SETUP
@@ -1408,11 +1432,14 @@ class VeritransPay extends PaymentModule
 	public function execNotification()
 	{
 		header("HTTP/1.1 200 OK");
+		$veritrans = new Veritrans_Config();
+		
 		Veritrans_Config::$isProduction = Configuration::get('VT_ENVIRONMENT') == 'production' ? true : false;
 
 		$veritrans_notification = new Veritrans_Notification(); 
 		$history = new OrderHistory();
 		$history->id_order = (int)$veritrans_notification->order_id;
+		error_log(print_r($veritrans_notification,true));
 		//Validating order
 		//if ($veritrans_notification->isVerified())
 		//{
