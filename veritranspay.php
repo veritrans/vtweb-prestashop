@@ -1324,6 +1324,7 @@ class VeritransPay extends PaymentModule
 			}
 			catch (Exception $e) {
 			  	$keys['errors'] = $e->getMessage();
+			  	echo $e->getMessage();
 			}
 			return $keys;
 			
@@ -1431,15 +1432,15 @@ class VeritransPay extends PaymentModule
 	
 	public function execNotification()
 	{
-		header("HTTP/1.1 200 OK");
 		$veritrans = new Veritrans_Config();
 		
 		Veritrans_Config::$isProduction = Configuration::get('VT_ENVIRONMENT') == 'production' ? true : false;
+		Veritrans_Config::$serverKey = Configuration::get('VT_SERVER_KEY');
 
 		$veritrans_notification = new Veritrans_Notification(); 
 		$history = new OrderHistory();
 		$history->id_order = (int)$veritrans_notification->order_id;
-		error_log(print_r($veritrans_notification,true));
+		
 		//Validating order
 		//if ($veritrans_notification->isVerified())
 		//{
