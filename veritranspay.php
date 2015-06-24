@@ -64,6 +64,7 @@ class VeritransPay extends PaymentModule
 			'ENABLED_MANDIRI_BILL',
 			'ENABLED_BBM_MONEY',
 			'ENABLED_INDOMARET',
+			'ENABLED_INDOSAT_DOMPETKU',
 			'VT_SANITIZED',
 			'VT_ENABLE_INSTALLMENT',
 			'ENABLED_BNI_INSTALLMENT',
@@ -115,8 +116,9 @@ class VeritransPay extends PaymentModule
 		if (!isset($config['ENABLED_BBM_MONEY']))
 			Configuration::set('ENABLED_BBM_MONEY', 0);
 		if (!isset($config['ENABLED_INDOMARET']))
-			Configuration::set('ENABLED_INDOMARET', 0);		
-
+			Configuration::set('ENABLED_INDOMARET', 0);
+		if (!isset($config['ENABLED_INDOSAT_DOMPETKU']))
+			Configuration::set('ENABLED_INDOSAT_DOMPETKU', 0);
 		parent::__construct();
 
 		$this->displayName = $this->l('Veritrans Pay');
@@ -575,6 +577,25 @@ class VeritransPay extends PaymentModule
 						//'class' => ''
 						),
 					array(
+						'type' => (version_compare(Configuration::get('PS_VERSION_DB'), '1.6') == -1)?'radio':'switch',
+						'label' => 'INDOSAT DOMPETKU',
+						'name' => 'ENABLED_INDOSAT_DOMPETKU',						
+						'is_bool' => true,
+						'values' => array(
+							array(
+								'id' => 'indosat_dompetku_yes',
+								'value' => 1,
+								'label' => 'Yes'
+								),
+							array(
+								'id' => 'indosat_dompetku_no',
+								'value' => 0,
+								'label' => 'No'
+								)
+							),
+						//'class' => ''
+						),
+					array(
 						'type' => 'select',
 						'label' => 'Enable Installments',
 						'name' => 'VT_ENABLE_INSTALLMENT',						
@@ -866,6 +887,7 @@ class VeritransPay extends PaymentModule
 			'enabled_mandiri' => htmlentities(Configuration::get('ENABLED_MANDIRI'), ENT_COMPAT, 'UTF-8'),
 			'enabled_permatava' => htmlentities(Configuration::get('ENABLED_PERMATAVA'), ENT_COMPAT, 'UTF-8'),
 			'enabled_indomaret' => htmlentities(Configuration::get('ENABLED_INDOMARET'), ENT_COMPAT, 'UTF-8'),
+			'enabled_indosat_dompetku' => htmlentities(Configuration::get('ENABLED_INDOSAT_DOMPETKU'), ENT_COMPAT, 'UTF-8'),
 			'statuses' => $order_states,
 			'payment_success_status_map' => htmlentities(Configuration::get('VT_PAYMENT_SUCCESS_STATUS_MAP'), ENT_COMPAT, 'UTF-8'),
 			'payment_challenge_status_map' => htmlentities(Configuration::get('VT_PAYMENT_CHALLENGE_STATUS_MAP'), ENT_COMPAT, 'UTF-8'),
@@ -1122,6 +1144,9 @@ class VeritransPay extends PaymentModule
 		}
 		if (Configuration::get('ENABLED_INDOMARET')){
 			$list_enable_payments[] = "cstore";
+		}
+		if (Configuration::get('ENABLED_INDOSAT_DOMPETKU')){
+			$list_enable_payments[] = "indosat_dompetku";
 		}
 		error_log(print_r($list_enable_payments,TRUE));	
 
