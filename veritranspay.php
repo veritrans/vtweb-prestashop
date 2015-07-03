@@ -595,7 +595,7 @@ class VeritransPay extends PaymentModule
 							),
 						//'class' => ''
 						),
-					array(
+					/*array(
 						'type' => 'select',
 						'label' => 'Enable Installments',
 						'name' => 'VT_ENABLE_INSTALLMENT',						
@@ -657,7 +657,7 @@ class VeritransPay extends PaymentModule
 						'name' => 'VT_INSTALLMENTS_MANDIRI',
 						//'class' => 'v1_vtweb_settings sensitive'\
 						'class' => 'VT_INSTALLMENTS_MANDIRI'	
-						),							
+						),*/							
 				/*	array(
 						'type' => 'checkbox',
 						'label' => 'Enable Mandiri Installments?',
