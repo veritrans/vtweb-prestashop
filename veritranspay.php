@@ -1148,7 +1148,7 @@ class VeritransPay extends PaymentModule
 		if (Configuration::get('ENABLED_INDOSAT_DOMPETKU')){
 			$list_enable_payments[] = "indosat_dompetku";
 		}
-		error_log(print_r($list_enable_payments,TRUE));	
+		//error_log(print_r($list_enable_payments,TRUE));	
 
 		$veritrans = new Veritrans_Config();
 		//SETUP
