@@ -1513,8 +1513,17 @@ class VeritransPay extends PaymentModule
 		       		echo 'Valid challenge notification accepted.';
 		     	} 		       	
 		     } else if ($veritrans_notification->transaction_status == 'settlement'){
-		     	$history->changeIdOrderState(Configuration::get('VT_PAYMENT_SUCCESS_STATUS_MAP'), $order_id_notif);
-		       	echo 'Valid success notification accepted.';
+
+		     	if($veritrans_notification->payment_type != 'credit_card')
+		     	{
+			     	$history->changeIdOrderState(Configuration::get('VT_PAYMENT_SUCCESS_STATUS_MAP'), $order_id_notif);
+			       	echo 'Valid success notification accepted.';
+		     	}
+		     	else
+		     	{
+		     		echo 'Credit card settlement notification accepted.';	
+		     	}
+
 		     }else if ($veritrans_notification->transaction_status == 'pending'){
 		     	$history->changeIdOrderState(Configuration::get('VT_PAYMENT_CHALLENGE_STATUS_MAP'), $order_id_notif);
 		       	echo 'Pending notification accepted.';
