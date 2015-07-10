@@ -595,7 +595,7 @@ class VeritransPay extends PaymentModule
 							),
 						//'class' => ''
 						),
-					array(
+					/*array(
 						'type' => 'select',
 						'label' => 'Enable Installments',
 						'name' => 'VT_ENABLE_INSTALLMENT',						
@@ -657,7 +657,7 @@ class VeritransPay extends PaymentModule
 						'name' => 'VT_INSTALLMENTS_MANDIRI',
 						//'class' => 'v1_vtweb_settings sensitive'\
 						'class' => 'VT_INSTALLMENTS_MANDIRI'	
-						),							
+						),*/							
 				/*	array(
 						'type' => 'checkbox',
 						'label' => 'Enable Mandiri Installments?',
@@ -1148,7 +1148,7 @@ class VeritransPay extends PaymentModule
 		if (Configuration::get('ENABLED_INDOSAT_DOMPETKU')){
 			$list_enable_payments[] = "indosat_dompetku";
 		}
-		error_log(print_r($list_enable_payments,TRUE));	
+		//error_log(print_r($list_enable_payments,TRUE));	
 
 		$veritrans = new Veritrans_Config();
 		//SETUP
@@ -1513,8 +1513,17 @@ class VeritransPay extends PaymentModule
 		       		echo 'Valid challenge notification accepted.';
 		     	} 		       	
 		     } else if ($veritrans_notification->transaction_status == 'settlement'){
-		     	$history->changeIdOrderState(Configuration::get('VT_PAYMENT_SUCCESS_STATUS_MAP'), $order_id_notif);
-		       	echo 'Valid success notification accepted.';
+
+		     	if($veritrans_notification->payment_type != 'credit_card')
+		     	{
+			     	$history->changeIdOrderState(Configuration::get('VT_PAYMENT_SUCCESS_STATUS_MAP'), $order_id_notif);
+			       	echo 'Valid success notification accepted.';
+		     	}
+		     	else
+		     	{
+		     		echo 'Credit card settlement notification accepted.';	
+		     	}
+
 		     }else if ($veritrans_notification->transaction_status == 'pending'){
 		     	$history->changeIdOrderState(Configuration::get('VT_PAYMENT_CHALLENGE_STATUS_MAP'), $order_id_notif);
 		       	echo 'Pending notification accepted.';
