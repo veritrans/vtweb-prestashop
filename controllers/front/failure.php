@@ -16,15 +16,16 @@ class VeritransPayFailureModuleFrontController extends ModuleFrontController
 		parent::initContent();
 		global $smarty;
 
+		// if payment failed, get order_id to generate reorder/re-checkout URL, so that customer could do re-checkout
 		if (null !==Tools::getValue('order_id') && '' !==Tools::getValue('order_id') ){
-			$recheckout = $smarty->tpl_vars['base_dir']->value."en/order?submitReorder=&id_order=".Tools::getValue('order_id');
+			$order_id = Tools::getValue('order_id');
 		}
 		$cart = $this->context->cart;
 		$status = 'failure';
 
 		$this->context->smarty->assign(array(
 			'status' => $status,
-			'recheckout' => $recheckout,
+			'order_id' => $order_id,
 			'this_path' => $this->module->getPathUri(),
 			'this_path_ssl' => Tools::getShopDomainSsl(true, true).__PS_BASE_URI__.'modules/'.$this->module->name.'/'
 		));
