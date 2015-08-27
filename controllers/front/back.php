@@ -21,6 +21,14 @@ class VeritransPayBackModuleFrontController extends ModuleFrontController
 		if (null !==Tools::getValue('order_id') && '' !==Tools::getValue('order_id') ){
 			$order_id = Tools::getValue('order_id');
 		}
+
+		// set order status in backend to be failure
+		$history = new OrderHistory();
+		$history->id_order = $order_id;
+		$history->changeIdOrderState(Configuration::get('VT_PAYMENT_FAILURE_STATUS_MAP'), $order_id);
+		$history->add(true);
+		//
+		
 		$cart = $this->context->cart;
 		$status = 'back';
 
