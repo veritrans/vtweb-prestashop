@@ -1330,12 +1330,12 @@ class VeritransPay extends PaymentModule
 	
 
 	//error_log($param_installment,true);
-		$param_payment_option = array(
-			'installment' => array(
-								'required' => $param_required,
-								'installment_terms' => $param_installment 
-							)
-			);
+		// $param_payment_option = array(
+		// 	'installment' => array(
+		// 						'required' => $param_required,
+		// 						'installment_terms' => $param_installment 
+		// 					)
+		// 	);
 
 		$params_all = array(
 			'payment_type' => Configuration::get('VT_PAYMENT_TYPE'),
@@ -1530,6 +1530,9 @@ class VeritransPay extends PaymentModule
 		     }else if ($veritrans_notification->transaction_status == 'cancel'){
 		     	$history->changeIdOrderState(Configuration::get('VT_PAYMENT_FAILURE_STATUS_MAP'), $order_id_notif);
 		       	echo 'Pending notification accepted.';
+		     }else if ($veritrans_notification->transaction_status == 'expire'){
+		     	$history->changeIdOrderState(Configuration::get('VT_PAYMENT_FAILURE_STATUS_MAP'), $order_id_notif);
+		       	echo 'Expire notification accepted.';
 		     }
 			 else
 		     {
