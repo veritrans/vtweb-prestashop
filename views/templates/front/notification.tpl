@@ -16,6 +16,15 @@
 		{l s='If you have questions, comments or concerns, please contact our' mod='veritranspay'} <a href="{$link->getPageLink('contact', true)}">{l s='expert customer support team. ' mod='veritranspay'}</a>.<br/><br/>
 	</p>
 	<a href="{$link->getPageLink('history', true)}" title="{l s='Back to orders'}" class="button-exclusive btn btn-primary">{l s='view order history'}</a>
+{elseif $status == 'back'}
+	<p>
+		<b><h3 class="alert alert-warning">{l s='We havent received your payment' mod='veritranspay'}</h3></b>
+	</p>
+	<p class="warning">
+		{l s='If you want to go to your cart, please do re-checkout.'}
+	</p>
+	<a class="button" href="{$link->getPageLink('order', true, NULL, "submitReorder&id_order={$order_id|intval}")|escape:'html':'UTF-8'}" title="{l s='Re-Checkout'}"> 
+	<i class="icon-refresh"></i>&nbsp;{l s='Re-Checkout'}</a>
 {else}
 	<p>
 		<b><h3 class="alert alert-danger">{l s='Payment Error!' mod='veritranspay'}</h3></b>
