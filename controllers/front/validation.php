@@ -123,10 +123,12 @@ class VeritransPayValidationModuleFrontController extends ModuleFrontController
   $veritrans_api_version = Configuration::get('VT_API_VERSION');
   $veritrans_payment_method = Configuration::get('VT_PAYMENT_TYPE');
 
-  if ($keys['errors'])
-  {
-    var_dump($keys['errors']);
-    exit;
+  if (array_key_exists('errors', $keys)){
+    if ($keys['errors'])
+    {
+      var_dump($keys['errors']);
+      exit;
+    }
   }
   if ($veritrans_api_version == 2 && $veritrans_payment_method == 'vtweb')
   {
