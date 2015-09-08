@@ -8,7 +8,7 @@
 <!-- <form action="{$link->getModuleLink('veritranspay', 'validation', [], true)}" method="post"> -->
 <img src="{$this_path}Veritrans.png" alt="{l s='veritrans' mod='veritranspay'}" width="120" height="21" style=" float:left; margin: 0px 10px 5px 0px;" /></h3> <br/>
 <div class="text-center">
-{if $status == 'success'}
+{if $smarty.get.status_code == '200' || $smarty.get.status_code == '201' || $status == 'success'}
 	<p>
 		<b><h3 class="alert alert-success">{l s='Your payment on %s is complete!' sprintf=$shop_name mod='veritranspay'}</h3></b>
 	</p>
