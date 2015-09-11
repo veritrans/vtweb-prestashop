@@ -1248,7 +1248,12 @@ class VeritransPay extends PaymentModule
 			foreach ($items as &$item) {						
 				$item['price'] = intval(round(call_user_func($conversion_func, $item['price'])));				
 			}
-		}		
+		}else if($cart_currency->iso_code == 'IDR')
+		{
+			foreach ($items as &$item) {						
+				$item['price'] = intval(round($item['price']));				
+			}
+		}
 				
 
 		$this->validateOrder($cart->id, Configuration::get('VT_ORDER_STATE_ID'), $cart->getOrderTotal(true, Cart::BOTH), $this->displayName, NULL, $mailVars, (int)$currency->id, false, $customer->secure_key);				
@@ -1361,7 +1366,6 @@ class VeritransPay extends PaymentModule
 
 			$params_all['vtweb']['payment_options'] = $param_payment_option;		
 		}
-		
 
 		if (Configuration::get('VT_API_VERSION') == 2 && Configuration::get('VT_PAYMENT_TYPE') != 'vtdirect') //transaksi https://github.com/veritrans/veritrans-php/blob/vtweb-2/examples/v2/vt_web/checkout_process.php line 77
 		{						
