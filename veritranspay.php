@@ -65,6 +65,7 @@ class VeritransPay extends PaymentModule
 			'ENABLED_BBM_MONEY',
 			'ENABLED_INDOMARET',
 			'ENABLED_INDOSAT_DOMPETKU',
+			'ENABLED_MANDIRI_ECASH',
 			'VT_SANITIZED',
 			'VT_ENABLE_INSTALLMENT',
 			'ENABLED_BNI_INSTALLMENT',
@@ -119,6 +120,8 @@ class VeritransPay extends PaymentModule
 			Configuration::set('ENABLED_INDOMARET', 0);
 		if (!isset($config['ENABLED_INDOSAT_DOMPETKU']))
 			Configuration::set('ENABLED_INDOSAT_DOMPETKU', 0);
+		if (!isset($config['ENABLED_MANDIRI_ECASH']))
+			Configuration::set('ENABLED_MANDIRI_ECASH', 0);
 		parent::__construct();
 
 		$this->displayName = $this->l('Veritrans Pay');
@@ -578,7 +581,7 @@ class VeritransPay extends PaymentModule
 						),
 					array(
 						'type' => (version_compare(Configuration::get('PS_VERSION_DB'), '1.6') == -1)?'radio':'switch',
-						'label' => 'INDOSAT DOMPETKU',
+						'label' => 'Indosat Dompetku',
 						'name' => 'ENABLED_INDOSAT_DOMPETKU',						
 						'is_bool' => true,
 						'values' => array(
@@ -589,6 +592,25 @@ class VeritransPay extends PaymentModule
 								),
 							array(
 								'id' => 'indosat_dompetku_no',
+								'value' => 0,
+								'label' => 'No'
+								)
+							),
+						//'class' => ''
+						),
+					array(
+						'type' => (version_compare(Configuration::get('PS_VERSION_DB'), '1.6') == -1)?'radio':'switch',
+						'label' => 'Mandiri Ecash',
+						'name' => 'ENABLED_MANDIRI_ECASH',						
+						'is_bool' => true,
+						'values' => array(
+							array(
+								'id' => 'mandiri_ecash_yes',
+								'value' => 1,
+								'label' => 'Yes'
+								),
+							array(
+								'id' => 'mandiri_ecash_no',
 								'value' => 0,
 								'label' => 'No'
 								)
@@ -888,6 +910,7 @@ class VeritransPay extends PaymentModule
 			'enabled_permatava' => htmlentities(Configuration::get('ENABLED_PERMATAVA'), ENT_COMPAT, 'UTF-8'),
 			'enabled_indomaret' => htmlentities(Configuration::get('ENABLED_INDOMARET'), ENT_COMPAT, 'UTF-8'),
 			'enabled_indosat_dompetku' => htmlentities(Configuration::get('ENABLED_INDOSAT_DOMPETKU'), ENT_COMPAT, 'UTF-8'),
+			'enabled_mandiri_ecash' => htmlentities(Configuration::get('ENABLED_MANDIRI_ECASH'), ENT_COMPAT, 'UTF-8'),
 			'statuses' => $order_states,
 			'payment_success_status_map' => htmlentities(Configuration::get('VT_PAYMENT_SUCCESS_STATUS_MAP'), ENT_COMPAT, 'UTF-8'),
 			'payment_challenge_status_map' => htmlentities(Configuration::get('VT_PAYMENT_CHALLENGE_STATUS_MAP'), ENT_COMPAT, 'UTF-8'),
@@ -1148,6 +1171,9 @@ class VeritransPay extends PaymentModule
 		if (Configuration::get('ENABLED_INDOSAT_DOMPETKU')){
 			$list_enable_payments[] = "indosat_dompetku";
 		}
+		if (Configuration::get('ENABLED_MANDIRI_ECASH')){
+			$list_enable_payments[] = "mandiri_ecash";
+		}
 		//error_log(print_r($list_enable_payments,TRUE));	
 
 		$veritrans = new Veritrans_Config();
@@ -1248,7 +1274,12 @@ class VeritransPay extends PaymentModule
 			foreach ($items as &$item) {						
 				$item['price'] = intval(round(call_user_func($conversion_func, $item['price'])));				
 			}
-		}		
+		}else if($cart_currency->iso_code == 'IDR')
+		{
+			foreach ($items as &$item) {						
+				$item['price'] = intval(round($item['price']));				
+			}
+		}
 				
 
 		$this->validateOrder($cart->id, Configuration::get('VT_ORDER_STATE_ID'), $cart->getOrderTotal(true, Cart::BOTH), $this->displayName, NULL, $mailVars, (int)$currency->id, false, $customer->secure_key);				
@@ -1361,7 +1392,6 @@ class VeritransPay extends PaymentModule
 
 			$params_all['vtweb']['payment_options'] = $param_payment_option;		
 		}
-		
 
 		if (Configuration::get('VT_API_VERSION') == 2 && Configuration::get('VT_PAYMENT_TYPE') != 'vtdirect') //transaksi https://github.com/veritrans/veritrans-php/blob/vtweb-2/examples/v2/vt_web/checkout_process.php line 77
 		{						
