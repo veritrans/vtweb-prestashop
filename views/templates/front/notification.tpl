@@ -4,13 +4,14 @@
 {assign var='current_step' value='payment'}
 {include file="$tpl_dir./order-steps.tpl"}
 
-<h3 class="page-subheading">{l s='Payment via Veritrans.' mod='veritranspay'}
+<h3 class="page-subheading">{l s='Payment via Veritrans %s.' sprintf = $status mod='veritranspay'}
 <!-- <form action="{$link->getModuleLink('veritranspay', 'validation', [], true)}" method="post"> -->
 <img src="{$this_path}Veritrans.png" alt="{l s='veritrans' mod='veritranspay'}" width="120" height="21" style=" float:left; margin: 0px 10px 5px 0px;" /></h3> <br/>
 <div class="text-center">
-{if $status == 'success'}
+{if $smarty.get.status_code == '200' || $smarty.get.status_code == '201' || $status == 'success'}
 	<p>
-		<b><h3 class="alert alert-success">{l s='Your payment on %s is complete!' sprintf=$shop_name mod='veritranspay'}</h3></b>
+		<b><h3 class="alert alert-success">{l s='Your payment on %s is complete!' sprintf= $shop_name mod='veritranspay'}</h3></b>
+		{$smarty.get.order_id}
 	</p>
 	<p class="warning">
 		{l s='If you have questions, comments or concerns, please contact our' mod='veritranspay'} <a href="{$link->getPageLink('contact', true)}">{l s='expert customer support team. ' mod='veritranspay'}</a>.<br/><br/>
