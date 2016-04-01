@@ -1519,23 +1519,42 @@ class VeritransPay extends PaymentModule
 		Veritrans_Config::$isProduction = Configuration::get('VT_ENVIRONMENT') == 'production' ? true : false;
 		Veritrans_Config::$serverKey = Configuration::get('VT_SERVER_KEY');
 
-		$veritrans_notification = new Veritrans_Notification(); 
+		$veritrans_notification = new Veritrans_Notification();
 		$history = new OrderHistory();
 		$history->id_order = (int)$veritrans_notification->order_id;
+
+		error_log('message notif');
+		error_log(print_r($veritrans_notification,TRUE));
+		error_log('==============================================');
 		
+		// check if order history already been updated to payment success, then save to array $order_history.
+		$order_id_notif = (int)$veritrans_notification->order_id;
+		$order = new Order($order_id_notif);
+		$order_histories = $order->getHistory($this->context->language->id, Configuration::get('VT_PAYMENT_SUCCESS_STATUS_MAP') );
+		// if (empty($order_histories))
+		// 	error_log("not found in DB");
+		// error_log(print_r($order_histories,true));
+		// print_r($order_histories,true);
+
 		//Validating order
 		//if ($veritrans_notification->isVerified())
 		//{
 		  	//$history->id_order = (int)$veritrans_notification->order_id;		  	
 			//error_log('notif verified');
 			//error_log('message notif: '.(int)$veritrans_notification->order_id);
-			$order_id_notif = (int)$veritrans_notification->order_id;
 			if ($veritrans_notification->transaction_status == 'capture')				
 		    {
 		     	if ($veritrans_notification->fraud_status== 'accept')
 		     	{
-		       		$history->changeIdOrderState(Configuration::get('VT_PAYMENT_SUCCESS_STATUS_MAP'), $order_id_notif);
-		       		echo 'Valid success notification accepted.';
+		     		// if order history !contains payment accepted, then update DB. Else, don't update DB
+		     		if (empty($order_histories))
+		     		{
+			       		$history->changeIdOrderState(Configuration::get('VT_PAYMENT_SUCCESS_STATUS_MAP'), $order_id_notif);
+			       		echo 'Valid success notification accepted.';
+		       		}
+		       		else{
+		       			error_log("########## Transaction has already been updated to success status once, no need to update again");
+		       		}
 		       	}
 		       	else if ($veritrans_notification->fraud_status== 'challenge')
 		     	{
@@ -1546,8 +1565,13 @@ class VeritransPay extends PaymentModule
 
 		     	if($veritrans_notification->payment_type != 'credit_card')
 		     	{
-			     	$history->changeIdOrderState(Configuration::get('VT_PAYMENT_SUCCESS_STATUS_MAP'), $order_id_notif);
-			       	echo 'Valid success notification accepted.';
+		     		// if order history !contains payment accepted, then update DB. Else, don't update DB
+		     		if (empty($order_histories)){
+				     	$history->changeIdOrderState(Configuration::get('VT_PAYMENT_SUCCESS_STATUS_MAP'), $order_id_notif);
+				       	echo 'Valid success notification accepted.';
+				    }else{
+		       			error_log("########## Transaction has already been updated to success status once, no need to update again");
+		       		}
 		     	}
 		     	else
 		     	{
