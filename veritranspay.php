@@ -1593,8 +1593,13 @@ class VeritransPay extends PaymentModule
 		       $history->changeIdOrderState(Configuration::get('VT_PAYMENT_FAILURE_STATUS_MAP'), $order_id_notif);
 		       echo 'Valid failure notification accepted';
 		     }
-		    
-		     $history->add(true);		     			  
+
+		    try{
+		    	$history->add(true);		     			  
+		    } catch(Exception $e) {
+				echo 'Order history not added: ' .$e->getMessage();
+				exit;
+			}
 		//}
 		exit;
 	}
