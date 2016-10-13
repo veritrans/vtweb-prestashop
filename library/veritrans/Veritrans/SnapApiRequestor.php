@@ -1,10 +1,10 @@
 <?php
 /**
- * Send request to Veritrans API
- * Better don't use this class directly, use Veritrans_VtWeb, Veritrans_VtDirect, Veritrans_Transaction
+ * Send request to Snap API
+ * Better don't use this class directly, use Veritrans_Snap
  */
 
-class Veritrans_ApiRequestor {
+class Veritrans_SnapApiRequestor {
 
   /**
    * Send GET request
@@ -79,8 +79,10 @@ class Veritrans_ApiRequestor {
     // For testing purpose
     if (class_exists('VT_Tests') && VT_Tests::$stubHttp) {
       $result = self::processStubed($curl_options, $url, $server_key, $data_hash, $post);
+      $info = VT_Tests::$stubHttpStatus;
     } else {
       $result = curl_exec($ch);
+      $info = curl_getinfo($ch);
       // curl_close($ch);
     }
 
@@ -90,10 +92,11 @@ class Veritrans_ApiRequestor {
     }
     else {
       $result_array = json_decode($result);
-      if (!in_array($result_array->status_code, array(200, 201, 202, 407))) {
-        $message = 'Veritrans Error (' . $result_array->status_code . '): '
-            . $result_array->status_message;
-        throw new Exception($message, $result_array->status_code);
+      if ($info['http_code'] != 200) {
+        $message = 'Veritrans Error (' . $info['http_code'] . '): '
+            . implode(',', $result_array->error_messages);
+        throw new Exception($message, $info['http_code']);
+
       }
       else {
         return $result_array;
